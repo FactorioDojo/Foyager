@@ -2,12 +2,12 @@
 setlocal
 
 REM Set the source and destination paths
-set "source_folder_1=gpt_actions_new"
-set "source_folder_2=gpt_writeouts"
+set "source_folder_1=agent-actions"
+set "source_folder_2=agent-writeouts"
 set "destination_folder=%APPDATA%\Factorio\mods"
 set "version=0.1.0"
-set "mod_name_1=gpt-actions"
-set "mod_name_2=gpt-writeouts"
+set "mod_name_1=agent-actions"
+set "mod_name_2=agent-writeouts"
 set "zip_file_1=%mod_name_1%_%version%.zip"
 set "zip_file_2=%mod_name_2%_%version%.zip"
 set "temp_folder_1=%mod_name_1%_%version%"

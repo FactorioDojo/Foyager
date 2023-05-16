@@ -1,10 +1,10 @@
 {
-  "name": "gpt-actions",
+  "name": "agent-actions",
   "version": "0.1.0",
   "factorio_version": "1.1",
-  "title": "gpt-actions",
+  "title": "agent-actions",
   "author": "Gotyoke",
   "contact": "None",
-  "homepage": "https://forums.factorio.com/viewforum.php?f=79",
-  "description": "Launches a rocket in record time."
+  "homepage": "None",
+  "description": "Provides an interface for sending remote commands to factorio"
 }
