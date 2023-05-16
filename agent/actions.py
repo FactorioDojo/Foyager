@@ -3,8 +3,12 @@ from rcon.source import Client
 class Actions():
     def __init__(self,player_id):
         self.player_id = player_id
-        self.client = Client('127.0.0.1', 27015, passwd='soo8UiSheeph4th')
+        self.client = Client('127.0.0.1', 27015, passwd='123')
 
+
+    def test(self):
+        with self.client as client:
+            client.run(f"/c game.player.print(1234)")
 
     def set_waypoint(self,waypoint):
         with self.client as client:
