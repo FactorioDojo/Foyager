@@ -1,0 +1,3 @@
+[submodule "factorio-docker"]
+	path = factorio-docker
+	url = https://github.com/factoriotools/factorio-docker

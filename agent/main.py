@@ -16,5 +16,5 @@ from writeouts import Writeouts
 actions = Actions(1)
 writeouts = Writeouts()
 
-writeouts.resources()
+# writeouts.resources()
 # actions.set_waypoint('''{{0,0}}''')
