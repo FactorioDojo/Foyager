@@ -2,34 +2,41 @@ require ("util")
 local task = {}
 local paused_tasks = {}
 
-rcon_add_task = function(task_type, parameters)
+add_task = function(task_type, parameters)
 	table.insert(task, {task_type, parameters})
 end
 
-rcon_cancel_tasks = function()
+cancel_tasks = function()
 	for i=1, #task do
 		table.insert(paused_tasks, task[i])
 		table.remove(task, i)
 	end
 end
 
-rcon_get_task = function(task_id)
+clear_tasks = function()
+	for i=1, #task do
+		table.remove(task, i)
+	end
+end
+
+get_task = function(task_id)
 	return task[task_id]
 end
 
-rcon_delete_task = function(task_id)
+delete_task = function(task_id)
 	table.remove(task, task_id)
 end
 	
 remote.add_interface("actions", {
-		add_task=rcon_add_task,
-		cancel_tasks=rcon_cancel_tasks,
-		get_task=rcon_get_task,
-		delete_task=rcon_delete_task
+		rcon_add_task=add_task,
+		rcon_cancel_tasks=cancel_tasks,
+		rcon_get_task=get_task,
+		rcon_delete_task=delete_task
 	})
 
 local destination = {x = 0, y = 0}
 local state = 1
+local was_walking = 0
 local idle = 0
 local pick = 0
 local dropping = 0
@@ -541,14 +548,35 @@ script.on_event(defines.events.on_game_created_from_scenario, function()
 end)
 
 -- Main per-tick event handler
+-- NOTE: This function previously worked on the assumption that all future tasks are known upfront, and thus
+-- some tasks can be executed in parallel to the next task. This is not the case in our scheme. This function may
+-- need to be torn out and rebuilt :(
 script.on_event(defines.events.on_tick, function(event)
 	local p = game.players[1]
 	local pos = p.position
 	local g = p.gui
 
+	-- Handle walking first
+	local walking = walk(destination.x - pos.x, destination.y - pos.y)
+
+	-- If we were walking on the last tick and now we no longer are, then we have reached our destination
+	if was_walking > 0 and walking.walking == false then
+		was_walking = 0
+		-- Update our destination
+		destination = {x = pos.x, y = pos.y}
+		-- Go to the next state 
+		state = state + 1
+	elseif walking.walking == true then
+		was_walking = 1
+	end
+
+	p.walking_state = walking
+
+	-- No more tasks, clear all previous tasks and set the state to 1
+	debug(p, string.format("%d", state))
 	if task[state] == nil or task[state][1] == "break" then
-		debug(p, string.format("(%.2f, %.2f) Complete after %f seconds (%d ticks)", pos.x, pos.y, p.online_time / 60, p.online_time))		
-		dbg = 0
+		clear_tasks()
+		state = 1
 		return
 	else
 		debug(p, string.format("(%.2f, %.2f, %d) %d %s", pos.x, pos.y, event.tick, state, task[state][1]))
@@ -566,7 +594,6 @@ script.on_event(defines.events.on_tick, function(event)
 		--state = state
 	end
 	
-	local walking = walk(destination.x - pos.x, destination.y - pos.y)
 		
 	if walking.walking == false then
 		if idle > 0 then
@@ -606,7 +633,7 @@ script.on_event(defines.events.on_tick, function(event)
 		if task[state][1] == "shortcut" then
 			destination = {x = task[state][2][1], y = task[state][2][2]}
 			walking = walk(destination.x - pos.x, destination.y - pos.y)
-			state = state + 1
+			-- state = state + 1
 		elseif task[state][1] ~= "walk" and task[state][1] ~= "mine" and task[state][1] ~= "idle" and task[state][1] ~= "pick" then
 			if doTask(p, task[state]) then
 				-- Do task while walking
@@ -614,7 +641,6 @@ script.on_event(defines.events.on_tick, function(event)
 			end
 		end
 	end
-	p.walking_state = walking
 end)
 
 script.on_event(defines.events.on_player_mined_entity, function(event)
