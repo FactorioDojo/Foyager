@@ -1,5 +1,33 @@
 require ("util")
-local task = require("tasks")
+local task = {}
+local paused_tasks = {}
+
+rcon_add_task = function(task_type, parameters)
+	table.insert(task, {task_type, parameters})
+end
+
+rcon_cancel_tasks = function()
+	for i=1, #task do
+		table.insert(paused_tasks, task[i])
+		table.remove(task, i)
+	end
+end
+
+rcon_get_task = function(task_id)
+	return task[task_id]
+end
+
+rcon_delete_task = function(task_id)
+	table.remove(task, task_id)
+end
+	
+remote.add_interface("actions", {
+		add_task=rcon_add_task,
+		cancel_tasks=rcon_cancel_tasks,
+		get_task=rcon_get_task,
+		delete_task=rcon_delete_task
+	})
+
 local destination = {x = 0, y = 0}
 local state = 1
 local idle = 0
