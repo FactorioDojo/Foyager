@@ -2,8 +2,9 @@ require ("util")
 local task = {}
 local paused_tasks = {}
 
-add_task = function(task_type, parameters)
-	table.insert(task, {task_type, parameters})
+function add_task(task_type, ...)
+  local parameters = {...}
+  table.insert(task, {task_type, table.unpack(parameters)})
 end
 
 cancel_tasks = function()
@@ -573,7 +574,7 @@ script.on_event(defines.events.on_tick, function(event)
 	p.walking_state = walking
 
 	-- No more tasks, clear all previous tasks and set the state to 1
-	debug(p, string.format("%d", state))
+	-- debug(p, string.format("%d", state))
 	if task[state] == nil or task[state][1] == "break" then
 		clear_tasks()
 		state = 1
@@ -594,7 +595,7 @@ script.on_event(defines.events.on_tick, function(event)
 		--state = state
 	end
 	
-		
+	-- Tasks we do while standing still	
 	if walking.walking == false then
 		if idle > 0 then
 			idle = idle - 1
@@ -606,10 +607,10 @@ script.on_event(defines.events.on_tick, function(event)
 			dropping = dropping - 1
 			debug(p, string.format("%d", dropping))
 			drop(p, task[state][3], task[state][4])
-		elseif task[state][1] == "walk" or task[state][1] == "shortcut" then
-			destination = {x = task[state][2][1], y = task[state][2][2]}
-			walking = walk(destination.x - pos.x, destination.y - pos.y)
-			state = state + 1
+		-- elseif task[state][1] == "walk" or task[state][1] == "shortcut" then
+		-- 	destination = {x = task[state][2][1], y = task[state][2][2]}
+		-- 	walking = walk(destination.x - pos.x, destination.y - pos.y)
+		-- 	state = state + 1
 		elseif task[state][1] == "mine" then
 			--------------Replace this
 			p.update_selected_entity(task[state][2])
