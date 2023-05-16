@@ -8,7 +8,7 @@ class Actions():
 
     def test(self):
         with self.client as client:
-            client.run(f"/c game.player.print(1234)")
+            client.run(f"/c game.players[1].print(1234)")
 
     def set_waypoint(self,waypoint):
         with self.client as client:
