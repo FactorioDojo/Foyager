@@ -1,0 +1,10 @@
+{
+  "name": "gpt-actions",
+  "version": "0.1.0",
+  "factorio_version": "1.1",
+  "title": "gpt-actions",
+  "author": "Gotyoke",
+  "contact": "None",
+  "homepage": "https://forums.factorio.com/viewforum.php?f=79",
+  "description": "Launches a rocket in record time."
+}

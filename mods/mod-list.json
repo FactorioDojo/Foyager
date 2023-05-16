@@ -1,0 +1,20 @@
+
+{
+  "mods": 
+  [
+    
+    {
+      "name": "base",
+      "enabled": true
+    },
+    
+    {
+      "name": "gpt_writeouts",
+      "enabled": true
+    },
+    {
+      "name": "gpt_actions",
+      "enabled": true
+    }
+  ]
+}

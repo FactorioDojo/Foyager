@@ -1,0 +1,9 @@
+{
+    "name": "gpt-actions",
+    "version": "0.1.0",
+    "title": "Interface to control player actions",
+    "author": "Penguin",
+    "description": "A simple mod to interact with factorio through rcon",
+    "factorio_version": "1.1"
+  }
+  

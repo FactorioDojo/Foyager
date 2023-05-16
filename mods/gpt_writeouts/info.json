@@ -1,0 +1,9 @@
+{
+    "name": "gpt-writeouts",
+    "version": "0.1.0",
+    "title": "Writeout game data to files",
+    "author": "Penguin",
+    "description": "A simple mod to write data to a file using RCON.",
+    "factorio_version": "1.1"
+  }
+  
