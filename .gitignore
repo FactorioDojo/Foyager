@@ -1,5 +1,5 @@
 # Do not include secrets file
-secrets_keys.py
+secret_keys.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
