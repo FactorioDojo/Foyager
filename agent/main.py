@@ -2,6 +2,8 @@ import os
 import json
 import openai
 
+import secrets
+
 from rcon.source import Client
 # from helpers import process_initial_file
 

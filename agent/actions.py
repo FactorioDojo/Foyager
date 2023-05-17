@@ -8,7 +8,8 @@ class Actions():
 
     def test(self):
         with self.client as client:
-            client.run(f"/c game.players[1].print(1234)")
+            client.run("/c remote.call('actions', 'add_task', 'move', {0.0, 0.0})")
+
 
     def set_waypoint(self,waypoint):
         with self.client as client:
