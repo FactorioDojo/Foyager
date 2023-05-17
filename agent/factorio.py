@@ -1,10 +1,9 @@
 from rcon.source import Client
 
-class Actions():
+class Factorio():
     def __init__(self,player_id):
         self.player_id = player_id
         self.client = Client('127.0.0.1', 27015, passwd='123')
-
 
     def test(self):
         with self.client as client:
@@ -20,6 +19,11 @@ class Actions():
         with self.client as client:
             client.run(f"remote.call('actions','mining_target',{self.player_id},{entity_name},{pos}")
 
-    # def insert_to_inventory(self,entity_name,pos,item_name):
-    #      with self.client as client:
-    #         client.run(f"/c remote.call('actions','insert_to_inventory',{self.player_id},{entity_name},{pos},{item2inventory_type[item]}{item_name})")
+    def resources(self):
+        with self.client as client:
+            client.run("/c remote.call('writeouts','writeout_resources')")
+
+    def inventory(self):
+        with self.client as client:
+            client.run("/c remote.call('writeouts','writeout_inventory')")
+
