@@ -36,7 +36,7 @@ class Agent():
                 print(x['response'])
         else:
             # execute the prompt
-            guidance_programs.program(description="A quick and nimble fighter.", valid_weapons=valid_weapons)
+            guidance_programs.program(description="A quick and nimble fighter.", valid_weapons=guidance_programs.valid_weapons)
         
        
 

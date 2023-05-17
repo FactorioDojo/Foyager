@@ -13,4 +13,5 @@ Roughly:
 
 
 
-agent = Agent(factorio=Factorio(1), interactive_mode=True)
+agent = Agent(factorio=Factorio(1), interactive_mode=False)
+agent.run()

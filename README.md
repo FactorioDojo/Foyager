@@ -29,7 +29,7 @@ A helper script to install this to your Factorio client mods folder is provided 
 
 ## Running
 
-You will need an API key from OpenAI. You may get one of those [here](https://platform.openai.com/). Create a file in the `agent` folder named `secret_keys.py` and store your API key there:
+You will need an API key from OpenAI. You may get one of those [here](https://platform.openai.com/). Store your API key as an environment variable.
 
 ```
 OPENAI_API_KEY = [your key] 
