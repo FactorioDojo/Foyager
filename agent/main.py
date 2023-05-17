@@ -1,10 +1,3 @@
-import os
-import json
-
-import secrets
-
-# from helpers import process_initial_file
-
 from factorio import Factorio 
 from agent import Agent
 
@@ -20,4 +13,4 @@ Roughly:
 
 
 
-agent = Agent(factorio=Factorio(), interactive_mode=True)
+agent = Agent(factorio=Factorio(1), interactive_mode=True)
