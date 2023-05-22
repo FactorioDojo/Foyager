@@ -1,61 +1,157 @@
 import guidance
-
-
-# In this file we will store all the different prompts and methods we query the LLM
-
-
-## Guaranteeing valid syntax JSON example
-# we can pre-define valid option sets
-valid_weapons = ["sword", "axe", "mace", "spear", "bow", "crossbow"]
-
-# define the prompt
-program = guidance("""The following is a character profile for an RPG game in JSON format.
-```json
-{
-    "description": "{{description}}",
-    "name": "{{gen 'name'}}",
-    "age": {{gen 'age' pattern='[0-9]+' stop=','}},
-    "armor": "{{#select 'armor'}}leather{{or}}chainmail{{or}}plate{{/select}}",
-    "weapon": "{{select 'weapon' options=valid_weapons}}",
-    "class": "{{gen 'class'}}",
-    "mantra": "{{gen 'mantra'}}",
-    "strength": {{gen 'strength' pattern='[0-9]+' stop=','}},
-    "items": [{{#geneach 'items' num_iterations=3}}
-        "{{gen 'this'}}",{{/geneach}}
-    ]
-}```""")
-
-
-
-## Agents
 import re
-# guidance.llm = guidance.llms.OpenAI("gpt-4")
-role_simulator = guidance('''
+
+# we use GPT-4 here, but you could use gpt-3.5-turbo as well
+guidance.llm = guidance.llms.OpenAI("gpt-3.5-turbo")
+
+
+
+# a custom function we will call in the guidance program
+def parse_best(prosandcons, options):
+    best = int(re.findall(r'Best=(\d+)', prosandcons)[0])
+    return options[best]
+
+# define the guidance program using role tags (like `{{#system}}...{{/system}}`)
+# TODO: Construct this prompt
+craft_red_science_v1 = guidance('''
 {{#system~}}
-You are a helpful assistant
+    You are 'FactorioAgent', an intelligent agent skilled in the pc game Factorio. You have played over 2000 hours and you are thus an expert. Your only goal is to craft a single red science. 
 {{~/system}}
-                                           
-{{#user~}}
-You will answer the user as {{role}} in the following conversation. At every step, I will provide you with the user input, as well as a comment reminding you of your instructions. Never talk about the fact that you are an AI, even if the user asks you. Always answer as {{role}}.
-{{#if first_question}}You can also start the conversation.{{/if}}
-{{~/user}}
-                                           
-{{~! The assistant either starts the conversation or not, depending on if this is the first or second agent }}
-{{#assistant~}}
-Ok, I will follow these instructions.
-{{#if first_question}}Let me start the conversation now:
-{{role}}: {{first_question}}{{/if}}
-{{~/assistant}}
 
-{{~! Then the conversation unrolls }}
-{{~#geneach 'conversation'}}
+{{! generate five potential ways to accomplish a goal }}
+{{#block hidden=True}}
 {{#user~}}
-User: {{set 'this.input' (await 'input')}}
-Comment: Remember, answer as a {{role}}. Start your utterance with {{role}}:
+I want to {{goal}}.
+{{~! generate potential options ~}}
+Can you please generate one option for how to accomplish this?
+Please make the option very short, at most one line.
 {{~/user}}
 
 {{#assistant~}}
-{{gen 'this.response' temperature=0 max_tokens=300}}
+{{gen 'options' n=5 temperature=1.0 max_tokens=500}}
 {{~/assistant}}
-{{~/geneach}}''')
+{{/block}}
+
+{{! generate pros and cons for each option and select the best option }}
+{{#block hidden=True}}
+{{#user~}}
+I want to {{goal}}.
+
+Can you please comment on the pros and cons of each of the following options, and then pick the best option?
+---{{#each options}}
+Option {{@index}}: {{this}}{{/each}}
+---
+Please discuss each option very briefly (one line for pros, one for cons), and end by saying Best=X, where X is the best option.
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'prosandcons' temperature=0.0 max_tokens=500}}
+{{~/assistant}}
+{{/block}}
+
+{{! generate a plan to accomplish the chosen option }}
+{{#user~}}
+I want to {{goal}}.
+{{~! Create a plan }}
+Here is my plan:
+{{parse_best prosandcons options}}
+Please elaborate on this plan, and tell me how to best accomplish it.
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'plan' max_tokens=500}}
+{{~/assistant}}''')
+
+# execute the program for a specific goal
+out = create_plan(
+    goal='read more books',
+    parse_best=parse_best # a custom python function we call in the program
+)
+
+print(out)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# a custom function we will call in the guidance program
+def parse_best(prosandcons, options):
+    best = int(re.findall(r'Best=(\d+)', prosandcons)[0])
+    return options[best]
+
+# define the guidance program using role tags (like `{{#system}}...{{/system}}`)
+create_plan = guidance('''
+{{#system~}}
+You are a helpful assistant.
+{{~/system}}
+
+{{! generate five potential ways to accomplish a goal }}
+{{#block hidden=True}}
+{{#user~}}
+I want to {{goal}}.
+{{~! generate potential options ~}}
+Can you please generate one option for how to accomplish this?
+Please make the option very short, at most one line.
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'options' n=5 temperature=1.0 max_tokens=500}}
+{{~/assistant}}
+{{/block}}
+
+{{! generate pros and cons for each option and select the best option }}
+{{#block hidden=True}}
+{{#user~}}
+I want to {{goal}}.
+
+Can you please comment on the pros and cons of each of the following options, and then pick the best option?
+---{{#each options}}
+Option {{@index}}: {{this}}{{/each}}
+---
+Please discuss each option very briefly (one line for pros, one for cons), and end by saying Best=X, where X is the best option.
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'prosandcons' temperature=0.0 max_tokens=500}}
+{{~/assistant}}
+{{/block}}
+
+{{! generate a plan to accomplish the chosen option }}
+{{#user~}}
+I want to {{goal}}.
+{{~! Create a plan }}
+Here is my plan:
+{{parse_best prosandcons options}}
+Please elaborate on this plan, and tell me how to best accomplish it.
+{{~/user}}
+
+{{#assistant~}}
+{{gen 'plan' max_tokens=500}}
+{{~/assistant}}''')
+
+# execute the program for a specific goal
+out = create_plan(
+    goal='read more books',
+    parse_best=parse_best # a custom python function we call in the program
+)
+
+print(out)
 

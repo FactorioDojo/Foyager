@@ -1,4 +1,4 @@
-from factorio import Factorio 
+from factorio_interface import FactorioInterface 
 from agent import Agent
 
 
@@ -13,5 +13,5 @@ Roughly:
 
 
 
-agent = Agent(factorio=Factorio(1), interactive_mode=False)
+agent = Agent(factorio_interface=FactorioInterface(1), interactive_mode=False)
 agent.run()
