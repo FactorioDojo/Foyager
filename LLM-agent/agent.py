@@ -7,6 +7,12 @@ import guidance_programs
 # initial_data_file = 'data/initial_data.json'
 
 
+'''
+Notes:
+- Agent will have infinite resources and all technologies unlocked
+- Map has no trees, water only in the starting area, 
+'''
+
 class Agent():
     def __init__(self, factorio_interface, interactive_mode):
         self.factorio_interface = factorio_interface 

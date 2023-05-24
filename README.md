@@ -1,12 +1,13 @@
 # FactorioAgent
 
-This project is an attempt to create an autonomous agent to play the game factorio. Currently, we are using API calls to OpenAIs text-davinci-3 model to plan and execute tasks. We are exploring other methods such as creating an interactive human/LLM dialogue to aid the process.
+This project is an attempt to create an autonomous agent to play the game factorio. 
 
 
 ## Requirements
 - Factorio
 - Docker
 
+# LLM-agent
 ## Installing
 
 We use a docker environment to run a headless Factorio server ([original repository](https://github.com/factoriotools/factorio-docker)). Run the server to create the necessary folder structure and configuration files. For this example data is stored in `/opt/factorio`.
