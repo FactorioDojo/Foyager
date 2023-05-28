@@ -1,39 +1,13 @@
 require ("util")
-local task = {}
-local paused_tasks = {}
+task = require ("tasks")
 
-function add_task(task_type, ...)
-  local parameters = {...}
-  table.insert(task, {task_type, table.unpack(parameters)})
-end
 
-cancel_tasks = function()
-	for i=1, #task do
-		table.insert(paused_tasks, task[i])
-		table.remove(task, i)
-	end
-end
 
 clear_tasks = function()
 	for i=1, #task do
 		table.remove(task, i)
 	end
 end
-
-get_task = function(task_id)
-	return task[task_id]
-end
-
-delete_task = function(task_id)
-	table.remove(task, task_id)
-end
-	
-remote.add_interface("actions", {
-		rcon_add_task=add_task,
-		rcon_cancel_tasks=cancel_tasks,
-		rcon_get_task=get_task,
-		rcon_delete_task=delete_task
-	})
 
 local destination = {x = 0, y = 0}
 local state = 1
@@ -556,6 +530,11 @@ script.on_event(defines.events.on_tick, function(event)
 	local p = game.players[1]
 	local pos = p.position
 	local g = p.gui
+
+	if next(task) == nil then
+        -- If it is, return early to skip the rest of the function
+        return
+    end
 
 	-- Handle walking first
 	local walking = walk(destination.x - pos.x, destination.y - pos.y)
