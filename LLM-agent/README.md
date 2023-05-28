@@ -13,9 +13,11 @@ Agents play on a randomly generated 500x500 square map, with the following condi
 - No biters
 - Water only near spawn position 
 
-## Factorio API  
+## Factorio Interface  
 
-### Primitive commands
+In contrast to Voyager, we use a custom interface to communicate with the factorio environment. In the `interface` folder 
+
+### API commands
 Interacting with factorio is exposed via a custom API. The primitive commands are 
 - `move(x,y)`
 - `build(x,y,building,direction)`
@@ -23,42 +25,10 @@ Interacting with factorio is exposed via a custom API. The primitive commands ar
 - `put(x,y,item)`
 - `take(x,y,item)`
 - `craft(item)`
+- `chat(message)`
 - `read_environment()`
 - `read_inventory()`
  
-All agents may use these commands in pursuit of their objective. 
-
-### Abstract commands
-
-Due to the difficulty in the level of attention to detail necessary to play the game with only these commands, we also provide an abstracted API. These abstract API commands act as a crutch for the agent, taking care of the specific implementations of general tasks. The abstract commands are:
-
-- `gather_ore(ore_type)`
-- `craft_item(item)`
-- `build_forge(x,y)`
-- `build_mine(x,y)`
-- more
-
-### API access levels
-
-There are 5 levels of API access. This allows us to test the agent against different standards.
-
-Level 1: Only primitive commands
-- `move(x,y)`
-- `build(x,y,building,direction)`
-- `mine(x,y)` 
-- `put(x,y,item)`
-- `take(x,y,item)`
-- `craft(item)`
-- `read_environment()`
-- `read_inventory()`
- 
-Level 2: ...
-
-Level 3: ...
-
-Level 4: ...
-
-Level 5: ...
 
 ## Prompts
 

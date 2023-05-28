@@ -18,28 +18,16 @@ class Agent():
         self.factorio_interface = factorio_interface 
         self.interactive_mode = interactive_mode
         
+        # self.
+        
         
     # Example of how this might work
-    def run(self):
-        if self.interactive_mode:
-            pass
-            # republican = guidance_programs.role_simulator(role='Republican')
-            # democrat = guidance_programs.role_simulator(role='Democrat')
+    def step(self):
+        # Get AI message
+        # Process AI message
+        # Parse code, run it
+        pass
 
-            # first_question = '''What do you think is the best way to stop inflation?'''
-            # republican = republican(input=first_question, first_question=None)
-            # democrat = democrat(input=republican["conversation"][-2]["response"].strip('Republican: '), first_question=first_question)
-            # for i in range(2):
-            #     republican = republican(input=democrat["conversation"][-2]["response"].replace('Democrat: ', ''))
-            #     democrat = democrat(input=republican["conversation"][-2]["response"].replace('Republican: ', ''))
-            # print('Democrat: ' + first_question)
-            # for x in democrat['conversation'][:-1]:
-            #     print('Republican:', x['input'])
-            #     print()
-            #     print(x['response'])
-        else:
-            # execute the prompt
-            guidance_programs.program(description="A quick and nimble fighter.", valid_weapons=guidance_programs.valid_weapons)
         
        
 
