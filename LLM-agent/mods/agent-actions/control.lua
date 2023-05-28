@@ -532,7 +532,6 @@ script.on_event(defines.events.on_tick, function(event)
 	local g = p.gui
 
 	if next(task) == nil then
-        -- If it is, return early to skip the rest of the function
         return
     end
 
