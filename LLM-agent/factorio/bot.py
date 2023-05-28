@@ -1,6 +1,7 @@
 from env import FoyagerEnv
 from inventory import Inventory
 from pathfinder import Pathfinder
+from surroundings import Surroundings
 
 # '''
 #     Ensure that every function which performs a check on local entity information or inventory information has the most up-to-date information
@@ -21,44 +22,45 @@ def response(func):
 class Bot():
     def __init__(self):
        self.inventory = Inventory()
-       self.pathfinder = Pathfinder() 
+       self.pathfinder = Pathfinder()
+       self.surroundings = Surroundings()
 
     @response
-    async def _build(self, position, item, direction):
+    async def build(self, position, item, direction):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {position}, {item}, {direction})")
 
     @response
-    async def _craft(self, count, recipe):
+    async def craft(self, count, recipe):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {count}, {recipe})")
 
     @response
-    async def _move(self, destination):
+    async def move(self, destination):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {destination})")
 
     @response
-    async def _put(self, position, item, amount, inventory):
+    async def put(self, position, item, amount, inventory):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {position}, {item}, {amount}, {inventory})")
 
     @response
-    async def _take(self, position, item, amount, inventory):
+    async def take(self, position, item, amount, inventory):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {position}, {item}, {amount}, {inventory})")
 
     @response
-    async def _chat(self, message):
+    async def chat(self, message):
         pass
 
     @response
-    async def _cancel_tasks(self):
+    async def cancel_tasks(self):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_cancel_tasks')")
 
     @response
-    async def _resources(self):
+    async def resources(self):
         with self.client as client:
             FoyagerEnv.client.run("/c remote.call('writeouts','writeout_resources')")
 
