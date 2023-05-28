@@ -1,5 +1,6 @@
 require ("util")
 task = require ("tasks")
+last_positions = {}
 
 
 
@@ -522,6 +523,7 @@ script.on_event(defines.events.on_game_created_from_scenario, function()
 
 end)
 
+
 -- Main per-tick event handler
 -- NOTE: This function previously worked on the assumption that all future tasks are known upfront, and thus
 -- some tasks can be executed in parallel to the next task. This is not the case in our scheme. This function may
@@ -531,7 +533,16 @@ script.on_event(defines.events.on_tick, function(event)
 	local pos = p.position
 	local g = p.gui
 
-	if next(task) == nil then
+    local last_pos = last_positions[p.index] or pos
+
+    -- Check if the player has moved since the last tick
+    local has_moved = pos.x ~= last_pos.x or pos.y ~= last_pos.y or false
+
+    -- Update the last position for the next tick
+    last_positions[p.index] = pos
+
+	-- if the task list is empty don't do anything this tick
+	if next(task)  == nil or not task[state] then
         return
     end
 
@@ -550,15 +561,19 @@ script.on_event(defines.events.on_tick, function(event)
 	end
 
 	p.walking_state = walking
-
+	-- If we aren't moving and
 	-- No more tasks, clear all previous tasks and set the state to 1
 	-- debug(p, string.format("%d", state))
-	if task[state] == nil or task[state][1] == "break" then
+
+	
+	if not has_moved and task[state] == nil or task[state][1] == "break" then
 		clear_tasks()
 		state = 1
 		return
 	else
-		debug(p, string.format("(%.2f, %.2f, %d) %d %s", pos.x, pos.y, event.tick, state, task[state][1]))
+		state = 1
+		return
+		-- debug(p, string.format("(%.2f, %.2f, %d) %d %s", pos.x, pos.y, event.tick, state, task[state][1]))
 		--if state == 1 then			
 		--	printGui(p, g, "")
 			-- In the introduction I need to click the initial "Continue" button to progress.
@@ -619,7 +634,7 @@ script.on_event(defines.events.on_tick, function(event)
 				state = state + 1
 			end
 		end
-	end
+	end 
 end)
 
 script.on_event(defines.events.on_player_mined_entity, function(event)
