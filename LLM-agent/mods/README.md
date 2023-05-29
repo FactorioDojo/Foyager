@@ -10,10 +10,8 @@ The interface to get game state has the following functions
 - writeout_filtered_entities - Writeout all entities of the type passed to a file <entity_type>_data.json
 within a box 100x100 around the player
 
-/c remote.call('writeouts', 'writeout_filtered_entities', entity_type) 
-ex/
+/c remote.call('writeouts', 'writeout_filtered_entities', <entity_type>) 
 /c remote.call('writeouts', 'writeout_filtered_entities', 'resource') 
-
 /c remote.call('writeouts', 'writeout_filtered_entities', 'transport-belt') 
 
 
