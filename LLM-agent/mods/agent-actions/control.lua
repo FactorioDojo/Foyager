@@ -1,7 +1,8 @@
 require ("util")
+require ("base64")
 task = require ("tasks")
+scripts = require("scripts") 
 last_positions = {}
-
 
 
 clear_tasks = function()
