@@ -1,8 +1,7 @@
+import base64
+
 """
 - Handles executing generated code in the step function (called from bridge)
-- Provides a clean interface for sending messages (with IDs) and doing callbacks to requesting methods
-    --For example, bot.inventory.craft() will send a request to server which sends requests to factorio. 
-    Server then polls the error.json (or whatever) then does a callback to craft() with the results
 - Similar to voyager, server.py will handle the agent getting stuck, teleporting it away, 
   sending console commands to make it always day and general housekeeping things for our environment
 """
@@ -13,8 +12,15 @@ class FactorioServer():
 
     def start(self):
         pass
+    
+    def stop(self):
+        pass
 
+    def step(self):
+        pass
 
+    def encode_script(self, script):
+        return base64.b64encode(script)
 
 # app.post("/start", (req, res) => {
 #     if (bot) onDisconnect("Restarting bot");
