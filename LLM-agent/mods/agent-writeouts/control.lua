@@ -157,44 +157,6 @@ local function write_data_to_file(data)
   game.write_file(filename, data) -- Write data to the file
 end
 
--- writeout functions to read data
-function writeout_initial_stuff()
-	writeout_entity_prototypes()
-	writeout_recipes()
-
-end
-
-function WriteOutResources()
-    -- Define the area to scan for resources (e.g., a square with corners at (-100, -100) and (100, 100))
-    local area = {{-100, -100}, {100, 100}}
-
-    -- Create a table to store the resource data
-    local resource_data = {}
-
-    -- Find all resource entities in the defined area
-    local resources = game.surfaces[1].find_entities_filtered({type = "resource", area = area})
-
-    -- Iterate through the resource entities and record their positions and types
-    for _, resource in ipairs(resources) do
-        local position = resource.position
-        local resource_type = resource.name
-        table.insert(resource_data, {resource_type = resource_type, position = position})
-    end
-
-    -- Convert the resource data to JSON format
-    local json_data = game.table_to_json(resource_data)
-
-    -- Write the JSON data to a file
-    local filename = "resource_data.json"
-    game.write_file(filename, json_data, false)
-
-    -- Notify the player that the resource data has been written
-    game.player.print("Resource data has been written to " .. filename)
-end
-
-
-
-
 function writeout_entity_prototypes()
 	header = "entity_prototypes: "
 	lines = {}
@@ -283,6 +245,39 @@ function writeout_resources(surface, area) -- quite fast. beastie can do > 40, u
 
 	line=nil
 end
+
+function writeout_filtered_entities(entity_type)
+    -- ...
+
+    -- Iterate through the entities and record their positions, types, and contents
+    for _, entity in ipairs(entities) do
+        local position = entity.position
+        local entity_type = entity.name
+        local contents = nil
+
+        -- If the entity has an inventory, get its contents
+        if entity.get_inventory(defines.inventory.chest) then
+            contents = entity.get_inventory(defines.inventory.chest).get_contents()
+        end
+
+        -- If the entity is a transport belt, get its contents
+        if entity.type == "transport-belt" then
+            contents = entity.get_transport_line(1).get_contents()  -- get contents of the first transport line
+            for item, count in pairs(entity.get_transport_line(2).get_contents()) do  -- get contents of the second transport line
+                if contents[item] then
+                    contents[item] = contents[item] + count
+                else
+                    contents[item] = count
+                end
+            end
+        end
+
+        table.insert(entity_data, {entity_type = entity_type, position = position, contents = contents})
+    end
+
+    -- ...
+end
+
 
 function writeout_item_containers(tick, surface)
 	header = "item_containers: " -- fixme: only writeout per area
@@ -473,33 +468,64 @@ function WriteOutInventory()
 end
 
 
-function writeout_chunk()
+function writeout_filtered_entities(entity_type)
 	local player_id = 1  -- Specify the ID of the player whose position you want to get
-	local player = game.players[player_id]  -- Get the player instance using the player's ID
+    local player = game.players[player_id]  -- Get the player instance using the player's ID
+    local player_position = player.character.position
 
-    local player_position = player.character.position  
-	local surface = game.surfaces['nauvis']
-	local chunk_x = player_position.x -  100
-	local chunk_y = player_position.y - 100
-	local chunk_xend = player_position.x + 100
-	local chunk_yend = player_position.y + 100
+    local surface = game.surfaces['nauvis']
+    local chunk_x = player_position.x -  100
+    local chunk_y = player_position.y - 100
+    local chunk_xend = player_position.x + 100
+    local chunk_yend = player_position.y + 100
 
-	area={left_top={x=chunk_x, y=chunk_y}, right_bottom={x=chunk_xend, y=chunk_yend}}
+    local area={left_top={x=chunk_x, y=chunk_y}, right_bottom={x=chunk_xend, y=chunk_yend}}
 
-	
-	writeout_resources(surface, area)
-	writeout_objects(game.tick, surface, area)
-	writeout_tiles(game.tick, surface, area)
+    -- Create a table to store the entity data
+    local entity_data = {}
+
+    -- Find all entities in the defined area of the specified type
+    local entities = surface.find_entities_filtered({area = area, type = entity_type})
+    for _, entity in ipairs(entities) do
+        local position = entity.position
+        local entity_type = entity.name
+        local contents = nil
+
+        -- If the entity has an inventory, get its contents
+        if entity.get_inventory(defines.inventory.chest) then
+            contents = entity.get_inventory(defines.inventory.chest).get_contents()
+        end
+
+        -- If the entity is a transport belt, get its contents
+        if entity.type == "transport-belt" then
+            contents = entity.get_transport_line(1).get_contents()  -- get contents of the first transport line
+            for item, count in pairs(entity.get_transport_line(2).get_contents()) do  -- get contents of the second transport line
+                if contents[item] then
+                    contents[item] = contents[item] + count
+                else
+                    contents[item] = count
+                end
+            end
+        end
+
+        table.insert(entity_data, {entity_type = entity_type, position = position, contents = contents})
+    end
+
+       -- Convert the inventory data to JSON format
+	   local json_data = game.table_to_json(entity_data)
+
+	   -- Write the JSON data to a file
+	   local filename = entity_type .. "_data.json"
+	   game.write_file(filename, json_data, false)
+   
+	   -- Notify the player that the inventory data has been written
+	   game.player.print("Inventory data has been written to " .. filename)
 end
-
 
 -- Define a remote interface to expose the functions
 remote.add_interface("writeouts", {
-	writeout_tiles = writeout_tiles,
-	writeout_initial_stuff = writeout_initial_stuff,
-	writeout_chunk = writeout_chunk,
+	writeout_filtered_entities=writeout_filtered_entities,
 	writeout_inventory = WriteOutInventory,
-	writeout_resources=WriteOutResources
   })
 
 
