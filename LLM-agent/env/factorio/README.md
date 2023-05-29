@@ -12,10 +12,12 @@ Interacting with factorio is exposed via a custom API. The primitive commands ar
 
 ## bot.inventory
 
-- `read_inventory()`
-- `have_item()`
+- `has_item()`
 
-## bot.surroundings 
+## bot.world 
 
+### tiles
+- `find_ore_patch(oretype)`
+- `find_water_source()`
+### buildings
 - `find_closest_building(building)`
-- `find_ore_patch()`
