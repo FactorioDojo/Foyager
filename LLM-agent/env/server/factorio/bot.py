@@ -52,20 +52,37 @@ class Bot():
             --    
     """
     async def build(self, position, item, direction):
-        # Ensure the arguments are valid
+        # Ensure the player is within reaching distance 
         if not self.is_near(position):
             raise Exception("You are not close enough to the target position")
         
+        # Ensure the item is valid
         if not item in self.item_catalog:
             raise Exception("Item ", {item}, " does not exist.")
         
+        # Ensure the player has the item in its inventory
+        if not item in self.inventory.inventory:
+            raise Exception("Player does not have", {item}, " in inventory.") 
+        
+        # Ensure the direction is valid
         if not direction in gd.directions:
             raise Exception("Invalid direction: ", {direction})
         
         # Ensure the building position is not occupied
         #TODO: Finish
         
-
+    """
+        Crafts the specified item
+        
+        Args:
+           recipie: Which item to craft 
+           count: How many of the item to craft
+        Raises:
+            --    
+    """
+    async def craft(self, count, recipe):
+        
+    
     async def _build(self, position, item, direction):
         with self.client as client:
             FoyagerEnv.client.run(f"/c remote.call('actions','rcon_add_task', {self.player_id}, {position}, {item}, {direction})")
