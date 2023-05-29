@@ -66,14 +66,14 @@ mkdir "$temp_folder_1"
 # Copy all the contents of the source folder to the temporary directory
 cp -R "$source_folder_1" "$temp_folder_1"
 
-# Change to the directory containing the temporary directory
-pushd .
+# Change to the temporary directory
+pushd "$temp_folder_1"
 
 # Create the zip file
-zip -r "$zip_file_1" "$temp_folder_1"
+zip -r "../$zip_file_1" .
 
 # Move the zip file to the destination folder
-mv "$zip_file_1" "$destination_folder"
+mv "../$zip_file_1" "$destination_folder"
 
 # Copy the zip file to the custom destination folder if the flag is set
 if $copy_flag; then
@@ -103,11 +103,11 @@ mkdir "$temp_folder_2"
 
 cp -R "$source_folder_2" "$temp_folder_2"
 
-pushd .
+pushd "$temp_folder_2"
 
-zip -r "$zip_file_2" "$temp_folder_2"
+zip -r "../$zip_file_2" .
 
-mv "$zip_file_2" "$destination_folder"
+mv "../$zip_file_2" "$destination_folder"
 
 if $copy_flag; then
     if [ -f "$custom_destination_folder/$zip_file_2" ]; then
