@@ -39,6 +39,9 @@ function move(x,y)
     local position = {x = x, y = y}
     game.get_player(1).print(position.x)
     game.get_player(1).print(position.y)
+    
+    --probable reason for pathing over water is collision masks.
+    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
     surface.request_path{
         bounding_box = character.bounding_box,
         collision_mask = character.prototype.collision_mask,
