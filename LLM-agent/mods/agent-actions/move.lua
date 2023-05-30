@@ -41,7 +41,7 @@ function move(x,y)
     game.get_player(1).print(position.y)
     surface.request_path{
         bounding_box = character.bounding_box,
-        collision_mask = character.prototype.collision_mask,ßßß
+        collision_mask = character.prototype.collision_mask,
         start = character.position,
         goal = position,
         force = "player",
