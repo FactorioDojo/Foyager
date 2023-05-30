@@ -16,13 +16,13 @@ class FoyagerEnv():
     def __init__(
         self,
         server_ip="127.0.0.1",
-        server_port=27015,
-        server_password="123",
+        rcon_port= 27015,
+        rcon_password= None,
         player_id=1,
         request_timeout=600,
         log_path="./logs",
     ):
-        self.client = Client('127.0.0.1', 27015, passwd='123')
+        self.client = Client(server_ip, rcon_port, passwd=rcon_password)
 
     def ping(self):
         with self.client as client:
