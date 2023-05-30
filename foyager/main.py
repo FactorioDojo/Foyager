@@ -11,4 +11,4 @@ voyager = Foyager(
 )
 
 # start lifelong learning
-voyager.ping()
+voyager.learn()
