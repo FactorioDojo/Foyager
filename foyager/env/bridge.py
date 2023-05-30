@@ -22,9 +22,9 @@ class FoyagerEnv():
         self.client = Client(server_ip, rcon_port, passwd=rcon_password)
         self.server = FactorioServer(self.client)
 
-    def observe(self,entitys):
+    def observe(self,entities):
         with self.client as client:
-            for entity in entitys:
+            for entity in entities:
                 client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}') ")
 
     def step(
