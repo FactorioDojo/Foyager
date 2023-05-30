@@ -3,12 +3,16 @@
 This project is an attempt to create an autonomous agent to play the game factorio. 
 
 
-## Requirements
+# LLM-agent
+
+This agent is heavily based on the [Voyager agent](https://github.com/MineDojo/Voyager) made for minecraft. We have repurposed it to play factorio.
+
+## Installing
+
+### Requirements
 - Factorio
 - Docker
 
-# LLM-agent
-## Installing
 
 We use a docker environment to run a headless Factorio server ([original repository](https://github.com/factoriotools/factorio-docker)). Run the server to create the necessary folder structure and configuration files. For this example data is stored in `/opt/factorio`.
 
