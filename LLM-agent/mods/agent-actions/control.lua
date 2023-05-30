@@ -1,5 +1,4 @@
 require ("util")
-require ("base64")
 task = require ("tasks")
 scripts = require("scripts") 
 last_positions = {}
@@ -567,8 +566,7 @@ script.on_event(defines.events.on_tick, function(event)
 	-- debug(p, string.format("%d", state))
 
 	
-	
-	if not has_moved and (task[state] == nil or (type(task[state]) == "table" and task[state][1] == "break")) then
+	if not has_moved and task[state] == nil or task[state][1] == "break" then
 		clear_tasks()
 		state = 1
 		return
