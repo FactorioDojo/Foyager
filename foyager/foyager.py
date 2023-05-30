@@ -161,32 +161,21 @@ class Foyager:
     def ping(self):
         return self.env.ping()
 
-    def reset(self, task, context="", reset_env=True):
+    def reset(self, task, context, reset_env=True):
+        
         self.action_agent_rollout_num_iter = 0
         self.task = task
         self.context = context
         if reset_env:
             self.env.reset(
-                options={
-                    "mode": "soft",
-                    "wait_ticks": self.env_wait_ticks,
-                }
+                options={}
             )
-        # TODO: No difficulty
-        # difficulty = (
-        #     "easy" if len(self.curriculum_agent.completed_tasks) > 15 else "peaceful"
-        # )
-        
-        # step to peek an observation
-        # TODO: Change this? 
-        events = self.env.step(
-            "bot.chat(`/time set ${getNextTime()}`);\n"
-            + f"bot.chat('/difficulty {difficulty}');"
-        )
+`       
         skills = self.skill_manager.retrieve_skills(query=self.context)
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )
+        events = None
         system_message = self.action_agent.render_system_message(skills=skills)
         human_message = self.action_agent.render_human_message(
             events=events, code="", task=self.task, context=context, critique=""

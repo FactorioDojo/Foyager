@@ -2,14 +2,11 @@ import os.path
 import time
 import warnings
 from typing import SupportsFloat, Any, Tuple, Dict
-
+from server.server import FactorioServer
 from rcon.source import Client
 import requests
 import json
-
-
 import utils as U
-
 
 # We will not be using a javascript server
 class FoyagerEnv():
@@ -23,64 +20,35 @@ class FoyagerEnv():
         log_path="./logs",
     ):
         self.client = Client(server_ip, rcon_port, passwd=rcon_password)
+        self.server = FactorioServer(self.client)
 
-    def ping(self):
+    def observe(self,entities):
         with self.client as client:
-            client.run(f"/c remote.call('actions','cancel_tasks')")
+            for entity in entities:
+                client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}') ")
 
-
-
-    #TODO: Change this to work with our local python server
     def step(
         self,
-        code: str,
-        programs: str = "",
-    ) -> Tuple[SupportsFloat, bool, bool, Dict[str, Any]]:
-        if not self.has_reset:
-            raise RuntimeError("Environment has not been reset yet")
-        self.check_process()
-        self.unpause()
-        data = {
-            "code": code,
-            "programs": programs,
-        }
-        res = requests.post(
-            f"{self.server}/step", json=data, timeout=self.request_timeout
-        )
+        name: str,
+        code: str
+    ):
+
+        res = self.client.run(f"/c remote.call('scripts', 'load_script', 1, '{name}', '{code}'")
+
         if res.status_code != 200:
-            raise RuntimeError("Failed to step Minecraft server")
+            raise RuntimeError("Failed to step Factorio server")
         returned_data = res.json()
-        self.pause()
         return json.loads(returned_data)
 
-    # def render(self):
-    #     raise NotImplementedError("render is not implemented")
+    def render(self):
+        raise NotImplementedError("render is not implemented")
 
-    # def reset(
-    #     self,
-    #     *,
-    #     seed=None,
-    #     options=None,
-    # ) -> Tuple[ObsType, Dict[str, Any]]:
-    #     if options is None:
-    #         options = {}
-
-    #     if options.get("inventory", {}) and options.get("mode", "hard") != "hard":
-    #         raise RuntimeError("inventory can only be set when options is hard")
-
-    #     self.reset_options = {
-    #         "port": self.mc_port,
-    #         "reset": options.get("mode", "hard"),
-    #         "inventory": options.get("inventory", {}),
-    #         "equipment": options.get("equipment", []),
-    #         "spread": options.get("spread", False),
-    #         "waitTicks": options.get("wait_ticks", 5),
-    #         "position": options.get("position", None),
-    #     }
-
-    #     self.unpause()
-    #     self.mineflayer.stop()
-    #     time.sleep(1)  # wait for mineflayer to exit
+    def reset(self,options=None,):
+        if options is None:
+            options = {}
+            # reload mods to wipe game state
+            with self.client as client:
+                client.run(f"/c game.reload_mods()")
 
     #     returned_data = self.check_process()
     #     self.has_reset = True
@@ -89,31 +57,3 @@ class FoyagerEnv():
     #     self.reset_options["reset"] = "soft"
     #     self.pause()
     #     return json.loads(returned_data)
-
-    # def close(self):
-    #     pass
-    #     self.unpause()
-    #     if self.connected:
-    #         res = requests.post(f"{self.server}/stop")
-    #         if res.status_code == 200:
-    #             self.connected = False
-    #     if self.mc_instance:
-    #         self.mc_instance.stop()
-    #     self.mineflayer.stop()
-    #     return not self.connected
-
-    # def pause(self):
-    #     if self.mineflayer.is_running and not self.server_paused:
-    #         res = requests.post(f"{self.server}/pause")
-    #         if res.status_code == 200:
-    #             self.server_paused = True
-    #     return self.server_paused
-
-    # def unpause(self):
-    #     if self.mineflayer.is_running and self.server_paused:
-    #         res = requests.post(f"{self.server}/pause")
-    #         if res.status_code == 200:
-    #             self.server_paused = False
-    #         else:
-    #             print(res.json())
-    #     return self.server_paused

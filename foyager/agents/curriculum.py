@@ -56,11 +56,11 @@ class CurriculumAgent:
             self.qa_cache = {}
         # vectordb for qa cache
         self.qa_cache_questions_vectordb = None
-        # Chroma(
-        #     collection_name="qa_cache_questions_vectordb",
-        #     embedding_function=OpenAIEmbeddings(),
-        #     persist_directory=f"{ckpt_dir}/curriculum/vectordb",
-        # )
+        Chroma(
+            collection_name="qa_cache_questions_vectordb",
+            embedding_function=OpenAIEmbeddings(),
+            persist_directory=f"{ckpt_dir}/curriculum/vectordb",
+        )
         assert self.qa_cache_questions_vectordb._collection.count() == len(
             self.qa_cache
         ), (
