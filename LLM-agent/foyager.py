@@ -1,25 +1,25 @@
-
-
 import copy
 import json
 import os
 import time
 from typing import Dict
 
-import voyager.utils as U
-from .env import FoyagerEnv
+import utils as U
+from env.bridge import FoyagerEnv
 
-from .agents import ActionAgent
-from .agents import CriticAgent
-from .agents import CurriculumAgent
-from .agents import SkillManager
+from agents import ActionAgent
+from agents import CriticAgent
+from agents import CurriculumAgent
+from agents import SkillManager
 
 
 # TODO: remove event memory
 class Foyager:
     def __init__(
         self,
+        server_ip = "127.0.0.1",
         rcon_port: int = None,
+        rcon_password: str =  None,
         openai_api_key: str = None,
         env_wait_ticks: int = 20,
         env_request_timeout: int = 600,
@@ -98,7 +98,9 @@ class Foyager:
         """
         # init env
         self.env = FoyagerEnv(
+            server_ip=server_ip,
             rcon_port=rcon_port,
+            rcon_password=rcon_password,
             request_timeout=env_request_timeout,
         )
         self.env_wait_ticks = env_wait_ticks
@@ -118,35 +120,35 @@ class Foyager:
             chat_log=action_agent_show_chat_log,
             execution_error=action_agent_show_execution_error,
         )
-        self.action_agent_task_max_retries = action_agent_task_max_retries
-        self.curriculum_agent = CurriculumAgent(
-            model_name=curriculum_agent_model_name,
-            temperature=curriculum_agent_temperature,
-            qa_model_name=curriculum_agent_qa_model_name,
-            qa_temperature=curriculum_agent_qa_temperature,
-            request_timout=openai_api_request_timeout,
-            ckpt_dir=ckpt_dir,
-            resume=resume,
-            mode=curriculum_agent_mode,
-            warm_up=curriculum_agent_warm_up,
-            core_inventory_items=curriculum_agent_core_inventory_items,
-        )
-        self.critic_agent = CriticAgent(
-            model_name=critic_agent_model_name,
-            temperature=critic_agent_temperature,
-            request_timout=openai_api_request_timeout,
-            mode=critic_agent_mode,
-        )
-        self.skill_manager = SkillManager(
-            model_name=skill_manager_model_name,
-            temperature=skill_manager_temperature,
-            retrieval_top_k=skill_manager_retrieval_top_k,
-            request_timout=openai_api_request_timeout,
-            ckpt_dir=ckpt_dir,
-            resume=resume,
-        )
-        self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
-        self.resume = resume
+        # self.action_agent_task_max_retries = action_agent_task_max_retries
+        # self.curriculum_agent = CurriculumAgent(
+        #     model_name=curriculum_agent_model_name,
+        #     temperature=curriculum_agent_temperature,
+        #     qa_model_name=curriculum_agent_qa_model_name,
+        #     qa_temperature=curriculum_agent_qa_temperature,
+        #     request_timout=openai_api_request_timeout,
+        #     ckpt_dir=ckpt_dir,
+        #     resume=resume,
+        #     mode=curriculum_agent_mode,
+        #     warm_up=curriculum_agent_warm_up,
+        #     core_inventory_items=curriculum_agent_core_inventory_items,
+        # )
+        # self.critic_agent = CriticAgent(
+        #     model_name=critic_agent_model_name,
+        #     temperature=critic_agent_temperature,
+        #     request_timout=openai_api_request_timeout,
+        #     mode=critic_agent_mode,
+        # )
+        # self.skill_manager = SkillManager(
+        #     model_name=skill_manager_model_name,
+        #     temperature=skill_manager_temperature,
+        #     retrieval_top_k=skill_manager_retrieval_top_k,
+        #     request_timout=openai_api_request_timeout,
+        #     ckpt_dir=ckpt_dir,
+        #     resume=resume,
+        # )
+        # self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
+        # self.resume = resume
 
         # init variables for rollout
         self.action_agent_rollout_num_iter = -1
@@ -155,6 +157,9 @@ class Foyager:
         self.messages = None
         self.conversations = []
         self.last_events = None
+
+    def ping(self):
+        return self.env.ping()
 
     def reset(self, task, context="", reset_env=True):
         self.action_agent_rollout_num_iter = 0

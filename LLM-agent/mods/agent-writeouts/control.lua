@@ -528,4 +528,3 @@ remote.add_interface("writeouts", {
 	writeout_inventory = WriteOutInventory,
   })
 
-
