@@ -1,13 +1,11 @@
-
-
 import copy
 import json
 import os
 import time
 from typing import Dict
 
-import voyager.utils as U
-from .env import FoyagerEnv
+import utils as U
+from env.bridge import FoyagerEnv
 
 from .agents import ActionAgent
 from .agents import CriticAgent

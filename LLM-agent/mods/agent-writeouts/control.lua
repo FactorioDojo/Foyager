@@ -157,6 +157,7 @@ local function write_data_to_file(data)
   game.write_file(filename, data) -- Write data to the file
 end
 
+<<<<<<< Updated upstream
 function writeout_entity_prototypes()
 	header = "entity_prototypes: "
 	lines = {}
@@ -186,7 +187,79 @@ function writeout_entity_prototypes()
 		end
 	end
 	write_init_file(0, header..table.concat(lines, "$").."\n")
+=======
+-- writeout functions to read data
+function writeout_initial_stuff()
+	writeout_entity_prototypes()
+	writeout_recipes()
+
 end
+
+function WriteOutResources()
+    -- Define the area to scan for resources (e.g., a square with corners at (-100, -100) and (100, 100))
+    local area = {{-100, -100}, {100, 100}}
+
+    -- Create a table to store the resource data
+    local resource_data = {}
+
+    -- Find all resource entities in the defined area
+    local resources = game.surfaces[1].find_entities_filtered({type = "resource", area = area})
+
+    -- Iterate through the resource entities and record their positions and types
+    for _, resource in ipairs(resources) do
+        local position = resource.position
+        local resource_type = resource.name
+        table.insert(resource_data, {resource_type = resource_type, position = position})
+    end
+
+    -- Convert the resource data to JSON format
+    local json_data = game.table_to_json(resource_data)
+
+    -- Write the JSON data to a file
+    local filename = "resource_data.json"
+    game.write_file(filename, json_data, false)
+
+    -- Notify the player that the resource data has been written
+    game.player.print("Resource data has been written to " .. filename)
+end
+function writeout_filtered_entities(entity_type)
+    local player_id = 1  -- Specify the ID of the player whose position you want to get
+    local player = game.players[player_id]  -- Get the player instance using the player's ID
+    local player_position = player.character.position
+
+    local surface = game.surfaces['nauvis']
+    local chunk_x = player_position.x -  100
+    local chunk_y = player_position.y - 100
+    local chunk_xend = player_position.x + 100
+    local chunk_yend = player_position.y + 100
+
+    local area={left_top={x=chunk_x, y=chunk_y}, right_bottom={x=chunk_xend, y=chunk_yend}}
+
+    -- Create a table to store the entity data
+    local entity_data = {}
+
+    -- Find all entities in the defined area of the specified type
+    local entities = surface.find_entities_filtered({area = area, type = entity_type})
+
+    -- Iterate through the entities and record their positions and types
+    for _, entity in ipairs(entities) do
+        local position = entity.position
+        local entity_type = entity.name
+        table.insert(entity_data, {entity_type = entity_type, position = position})
+    end
+
+    -- Convert the entity data to JSON format
+    local json_data = game.table_to_json(entity_data)
+
+    -- Write the JSON data to a file
+    local filename = entity_type .. "_data.json"
+    game.write_file(filename, json_data, false)
+
+    -- Notify the player that the entity data has been written
+    game.player.print("Entity data has been written to " .. filename)
+>>>>>>> Stashed changes
+end
+
 
 function writeout_recipes()
 	-- FIXME: this assumes that there is only one player force

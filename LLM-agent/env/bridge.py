@@ -8,7 +8,7 @@ import requests
 import json
 
 
-import voyager.utils as U
+import utils as U
 
 
 # We will not be using a javascript server
@@ -24,12 +24,18 @@ class FoyagerEnv():
     ):
         self.client = Client('127.0.0.1', 27015, passwd='123')
 
+    def ping(self):
+        with self.client as client:
+            client.run(f"/c remote.call('actions','cancel_tasks')")
+
+
+
     #TODO: Change this to work with our local python server
     def step(
         self,
         code: str,
         programs: str = "",
-    ) -> Tuple[ObsType, SupportsFloat, bool, bool, Dict[str, Any]]:
+    ) -> Tuple[SupportsFloat, bool, bool, Dict[str, Any]]:
         if not self.has_reset:
             raise RuntimeError("Environment has not been reset yet")
         self.check_process()
