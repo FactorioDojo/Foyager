@@ -3,16 +3,10 @@ import time
 import warnings
 from typing import SupportsFloat, Any, Tuple, Dict
 from server.server import FactorioServer
-
 from rcon.source import Client
 import requests
 import json
-
-
 import utils as U
-
-
-
 
 # We will not be using a javascript server
 class FoyagerEnv():
@@ -28,18 +22,11 @@ class FoyagerEnv():
         self.client = Client(server_ip, rcon_port, passwd=rcon_password)
         self.server = FactorioServer(self.client)
 
-    def observe(self):
-        start_entity_types = ['resource','simple-entity',]
+    def observe(self,entitys):
         with self.client as client:
-            for entity in start_entity_types:
+            for entity in entitys:
                 client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}') ")
 
-
-
-
-
-    #TODO: Change this to work with our local python server
-    
     def step(
         self,
         name: str,
@@ -62,11 +49,6 @@ class FoyagerEnv():
             # reload mods to wipe game state
             with self.client as client:
                 client.run(f"/c game.reload_mods()")
-
-
-
-
-
 
     #     returned_data = self.check_process()
     #     self.has_reset = True
