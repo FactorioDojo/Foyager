@@ -1,6 +1,4 @@
 require ("util")
-require ("base64")
-require("move")
 task = require ("tasks")
 scripts = require("scripts") 
 last_positions = {}
@@ -530,7 +528,114 @@ end)
 -- NOTE: This function previously worked on the assumption that all future tasks are known upfront, and thus
 -- some tasks can be executed in parallel to the next task. This is not the case in our scheme. This function may
 -- need to be torn out and rebuilt :(
+script.on_event(defines.events.on_tick, function(event)
+	local p = game.players[1]
+	local pos = p.position
+	local g = p.gui
 
+    local last_pos = last_positions[p.index] or pos
+
+    -- Check if the player has moved since the last tick
+    local has_moved = pos.x ~= last_pos.x or pos.y ~= last_pos.y or false
+
+    -- Update the last position for the next tick
+    last_positions[p.index] = pos
+
+	-- if the task list is empty don't do anything this tick
+	if next(task)  == nil or not task[state] then
+        return
+    end
+
+	-- Handle walking first
+	local walking = walk(destination.x - pos.x, destination.y - pos.y)
+
+	-- If we were walking on the last tick and now we no longer are, then we have reached our destination
+	if was_walking > 0 and walking.walking == false then
+		was_walking = 0
+		-- Update our destination
+		destination = {x = pos.x, y = pos.y}
+		-- Go to the next state 
+		state = state + 1
+	elseif walking.walking == true then
+		was_walking = 1
+	end
+
+	p.walking_state = walking
+	-- If we aren't moving and
+	-- No more tasks, clear all previous tasks and set the state to 1
+	-- debug(p, string.format("%d", state))
+
+	
+	if not has_moved and task[state] == nil or task[state][1] == "break" then
+		clear_tasks()
+		state = 1
+		return
+	else
+		state = 1
+		return
+		-- debug(p, string.format("(%.2f, %.2f, %d) %d %s", pos.x, pos.y, event.tick, state, task[state][1]))
+		--if state == 1 then			
+		--	printGui(p, g, "")
+			-- In the introduction I need to click the initial "Continue" button to progress.
+			--script.raise_event(defines.events.on_gui_click,{
+			--	element=g.center.children[1].children[2].children[2],
+			--	player_index=1,
+			--	button=defines.mouse_button_type.left,
+			--	alt=false,
+			--	control=false,
+			--	shift=false})			
+		--end
+		--state = state
+	end
+	
+	-- Tasks we do while standing still	
+	if walking.walking == false then
+		if idle > 0 then
+			idle = idle - 1
+		elseif pick > 0 then
+			pick = pick - 1
+			p.picking_state = true
+			debug(p, string.format("picking %d", pick))
+		elseif dropping > 0 then
+			dropping = dropping - 1
+			debug(p, string.format("%d", dropping))
+			drop(p, task[state][3], task[state][4])
+		-- elseif task[state][1] == "walk" or task[state][1] == "shortcut" then
+		-- 	destination = {x = task[state][2][1], y = task[state][2][2]}
+		-- 	walking = walk(destination.x - pos.x, destination.y - pos.y)
+		-- 	state = state + 1
+		elseif task[state][1] == "mine" then
+			--------------Replace this
+			p.update_selected_entity(task[state][2])
+			p.mining_state = {mining = true, position = task[state][2]}
+			--------------With this
+			--if mining_done == 1 then
+			--	mining_done = 0
+			--	state = state + 1
+			--	-- Do I lose a tick here?
+			--else
+			--	p.update_selected_entity(task[state][2])
+			--	p.mining_state = {mining = true, position = task[state][2]}
+			--	mining_done = 0
+			--end
+			--------------For better mining handling (fixes fast-replace weirdness)
+		elseif doTask(p, task[state]) then
+			-- Do task while standing still
+			state = state + 1
+		end
+	else
+		if task[state][1] == "shortcut" then
+			destination = {x = task[state][2][1], y = task[state][2][2]}
+			walking = walk(destination.x - pos.x, destination.y - pos.y)
+			-- state = state + 1
+		elseif task[state][1] ~= "walk" and task[state][1] ~= "mine" and task[state][1] ~= "idle" and task[state][1] ~= "pick" then
+			if doTask(p, task[state]) then
+				-- Do task while walking
+				state = state + 1
+			end
+		end
+	end 
+end)
 
 script.on_event(defines.events.on_player_mined_entity, function(event)
 	--------------Replace this
