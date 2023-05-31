@@ -1,3 +1,5 @@
+require("lib/log_utils")
+
 -- Create an entity on the surface. In most cases this is building a structure/item/entity
 -- It checks to see if a fast-replace works first.
 -- Returns false on failure to prevent advancing state until within reach and/or item is in the inventory
@@ -77,10 +79,6 @@ local function build(p, position, item, direction)
 	return true
 end
 
-character_is_moving = false
-path_index = 1
-path = nil
-
 -- Determines which direction the character should go.
 function get_direction(start_position, end_position)
     local angle = math.atan2(end_position.y - start_position.y, start_position.x - end_position.x)
@@ -154,14 +152,21 @@ function move(x,y)
     subscribe_on_tick_event(on_tick_move_event)
 end
 
-
-
-
-
 -- Handcraft one or more of a recipe
-local function craft(p, count, recipe)
-	amt = p.begin_crafting{recipe = recipe, count = count}
-	--XETX Do I want to return false if amt = 0?
+local function craft(count, recipe)
+    clog("Info: called craft() function")
+    if count <= 0 then
+        clog("Error: craft count must be >= 0")
+        return false
+    end
+
+	amt = game.players[1].begin_crafting{recipe = recipe, count = count}
+    if amt ~= count then
+        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+        return true
+    end
+
+    clog("Info: successfully crafted " .. cout .. " item")
 	return true
 end
 
