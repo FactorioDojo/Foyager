@@ -16,11 +16,11 @@ class FoyagerEnv():
         rcon_port= 27015,
         rcon_password= None,
         player_id=1,
-        request_timeout=600,
-        log_path="./logs",
+        log_path="/opt/factorio/factorio-current.log",
     ):
+        self.player_id = player_id
+        self.log_path = log_path
         self.client = Client(server_ip, rcon_port, passwd=rcon_password)
-        self.server = FactorioServer(self.client)
 
     def observe(self,entities):
         with self.client as client:
@@ -33,13 +33,20 @@ class FoyagerEnv():
         code: str
     ) -> json:
         
-        message_id = uuid.uuid4()
-        self.client.run(f"/c remote.call('scripts', 'load_script', '{message_id}', '{function_name}', '{code}'")
-        self.client.run(f"/c remote.call('scipts', 'execute_script', '{message_id}', '{function_name})")
-        return self.get_response(message_id)
+        load_message_id = uuid.uuid4()
+        self.client.run(f"/c remote.call('scripts', 'load_script', '{load_message_id}', '{function_name}', '{code}'")
+        
+        execute_message_id = uuid.uuid4()
+        self.client.run(f"/c remote.call('scipts', 'execute_script', '{execute_message_id}', '{function_name})")
+        return self.get_response(load_message_id, execute_message_id)
 
-    def get_response(message_id) -> json:
-        # Scrape the factorio log file here, return as json (idk the format)
+    def get_response(self, message_id) -> json:
+        
+        if not os.path.isfile():
+            raise FileNotFoundError(self.log_path + " cannot be found")
+        else:
+            with open(self.log_path) as f:
+                content = f.read().splitlines()
         raise NotImplementedError()
 
     def render(self):
