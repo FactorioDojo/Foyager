@@ -1,26 +1,11 @@
+require("lib/log_utils.lua")
 local base64 = require("lib/base64")
 scripts = {}
-
-function print_player(msg)
-    game.players[1].print(msg)
-end
-
-
-
--- Custom log
--- Print log to file with message_id attached for easier scraping
-function clog(msg)
-    log("Message ID: " .. global["message_id"] .. " " ..msg)
-end
-
 
 -- Loads in a script encoded in base64, saves it to the global context
 local function load_script(msg_id, function_name, script)
     -- Set the message id
     global["message_id"] = msg_id
-
-    -- game.players[1].print(msg_id)
-    -- game.players[1].print(global["message_id"])
 
     -- Decode the script string
 	local script_string = base64.decode(script)
@@ -63,9 +48,9 @@ local function execute_script(msg_id, function_name, ...)
     end
 end
 
-    remote.add_interface("scripts", {
+remote.add_interface("scripts", {
     load_script=load_script,
     execute_script=execute_script
-      })
+})
 
 return scripts

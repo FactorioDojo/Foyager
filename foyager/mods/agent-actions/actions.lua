@@ -82,7 +82,7 @@ path_index = 1
 path = nil
 
 -- Determines which direction the character should go.
-local function get_direction(start_position, end_position)
+function get_direction(start_position, end_position)
     local angle = math.atan2(end_position.y - start_position.y, start_position.x - end_position.x)
 
     -- Given a circle representing the angles, it is divided into eight octants representing the cardinal directions.
@@ -137,6 +137,10 @@ function move(x,y)
     --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
     local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
     local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+
+    global.path_received = false
+
+
     surface.request_path{
         bounding_box = bbox2,
         collision_mask = {"water-tile"},
@@ -146,30 +150,11 @@ function move(x,y)
         radius = 3.0,
         path_resolution_modifier = 0
     }
+
+    subscribe_on_tick_event(on_tick_move_event)
 end
 
--- Moves the character.
--- TODO: Unsubscribe when destination is reached
-on_tick_move_subscriber = function (event)
-    local character = game.get_player(1).character
-    if character_is_moving and path ~= nil then
-        if positions_approximately_equal(character.position, path[path_index].position) then
-            -- waypoint reached
-            path_index = path_index + 1  -- select the next waypoint
-        end
 
-        if path_index == #path then
-            character_is_moving = false
-            path_index = 1
-        else
-            -- move the character for one tick
-            game.get_player(1).walking_state = {
-                walking = true,
-                direction = get_direction(character.position, path[path_index].position)
-            }
-        end
-    end
-end
 
 
 

@@ -526,6 +526,6 @@ end
 remote.add_interface("writeouts", {
 	writeout_filtered_entities=writeout_filtered_entities,
 	writeout_inventory = WriteOutInventory,
-  })
+})
 
 return writeouts
