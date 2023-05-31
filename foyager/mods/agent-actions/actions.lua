@@ -109,8 +109,6 @@ function positions_approximately_equal(a, b)
     return math.abs(a.x - b.x) < 0.25 and math.abs(a.y - b.y) < 0.25
 end
 
-
-
 -- Requests a path when the map is clicked.
 function move(x,y)
     local surface = game.get_surface("nauvis")
@@ -172,7 +170,7 @@ end
 
 -- Adjust the filter of a filter inserter. It might work for other filter things too, though
 -- probably not splitters
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 local function filter(p, position, filter, slot)
 	p.update_selected_entity(position)
 	if not p.selected then
@@ -189,7 +187,7 @@ local function filter(p, position, filter, slot)
 end
 
 -- Manually launch the rocket
--- Returns false on failure to prevent advancing state until the launch succeeds
+-- Returns false on failure 
 local function launch(p, position)
 	p.update_selected_entity(position)
 	if not p.selected then
@@ -205,7 +203,7 @@ local function launch(p, position)
 end
 
 -- Set the inventory slot space on chests (and probably other items, which are untested)
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 local function limit(p, position, limit, slot)
 	p.update_selected_entity(position)
 	if not p.selected then
@@ -237,7 +235,7 @@ local function limit(p, position, limit, slot)
 end
 
 -- Set the input/output/filter settings for a splitter
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 local function priority(p, position, input, output, filter)
 	p.update_selected_entity(position)
 	if not p.selected then
@@ -260,17 +258,20 @@ local function priority(p, position, input, output, filter)
 end
 
 -- Place an item from the character's inventory into an entity's inventory
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 -- It is possible to put 0 items if none are in the character's inventory
-local function put(p, position, item, amount, slot)
-	p.update_selected_entity(position)
+local function put(position, item, amount, slot)
+    clog("Info: Calling put() function")
+	local p = game.players[1]
+    p.update_selected_entity(position)
 
 	if not p.selected then
-		--debug(p, string.format("put: entity not selected: %d", state))
+        clog("Dev Error: This should not happen")
 		return false
 	end
 
  	if not p.can_reach_entity(p.selected) then
+        clog("Error: entity is not reachable")
  		--debug(p, string.format("put: entity not reachable: %d", state))
  		return false
  	end
@@ -280,10 +281,13 @@ local function put(p, position, item, amount, slot)
 	local toinsert = math.min(amountininventory, amount)
 
 	if toinsert == 0 then
-		debug(p, string.format("put: nothing to insert: %d", state))
+        clog("Error: cannot insert 0 items")
+		-- debug(p, string.format("put: nothing to insert: %d", state))
 		return true
 	end
+
 	if not otherinv then
+        clog("Error: No slot to insert items")
 		--debug(p, string.format("put: no slot: %d", state))
 		return false
 	end
@@ -291,16 +295,19 @@ local function put(p, position, item, amount, slot)
 	local inserted = otherinv.insert{name=item, count=toinsert}
 	--if we already failed for trying to insert no items, then if no items were inserted, it must be because it is full
 	if inserted == 0 then
-		debug(p, string.format("put: nothing inserted: %d", state))
-		return true
+        clog("Warning: Slot was full, nothing was inserted")
+		return false
+        -- debug(p, string.format("put: nothing inserted: %d", state))
+		-- return true
 	end
 
+    clog("Info: successfully  inserted " .. amount .. " items")
 	p.remove_item{name=item, count=inserted}
 	return true
 end
 
 -- Set the recipe of an assembling machine, chemical plant, or oil refinery (anything I'm missing?)
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 -- Items still in the machine not used in the new recipe will be placed in the character's inventory
 -- NOTE: There is a bug here. It is possible to set a recipe that is not yet available through
 -- completed research. For now, go on the honor system.
@@ -328,7 +335,7 @@ local function recipe(p, position, recipe)
 end
 
 -- Rotate an entity one quarter turn
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 local function rotate(p, position, direction)
 	local opts = {reverse = false}
 	p.update_selected_entity(position)
@@ -361,7 +368,7 @@ local function speed(speed)
 end
 
 -- Take an item from the entity's inventory into the character's inventory
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure
 -- It is possible to take 0 items if none are in the entity's inventory
 local function take(p, position, item, amount, slot)
 	p.update_selected_entity(position)
@@ -414,7 +421,7 @@ local function tech(p, research)
 end
 
 -- Bulk move items from the character's inventory into the entity's inventory
--- Returns false on failure to prevent advancing state until within reach
+-- Returns false on failure 
 -- NOTE: This should only be used to transfer items into an empty entity because it
 -- simply overwrites the contents of the slots of the entity. For now, go on the honor system.
 local function transfer(p, position, numslots, slot)
