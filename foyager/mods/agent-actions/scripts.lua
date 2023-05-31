@@ -1,4 +1,4 @@
-local base64 = require("base64")
+local base64 = require("lib/base64")
 scripts = {}
 
 function print_player(msg)

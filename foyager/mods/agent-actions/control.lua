@@ -1,5 +1,4 @@
 require ("util")
-task = require ("tasks")
 scripts = require("scripts")
 writeouts = require("writeouts")
 actions = require("actions")
@@ -38,9 +37,9 @@ on_tick_subscribers = {}
 
 -- Main per-tick event handler
 script.on_event(defines.events.on_tick, function(event)
-	for subscriber in on_tick_subscribers do
-		subscriber()
-	end
+	-- for subscriber in on_tick_subscribers do
+	-- 	subscriber()
+	-- end
 end)
 
 
