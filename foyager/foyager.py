@@ -120,7 +120,7 @@ class Foyager:
             chat_log=action_agent_show_chat_log,
             execution_error=action_agent_show_execution_error,
         )
-        # self.action_agent_task_max_retries = action_agent_task_max_retries
+        self.action_agent_task_max_retries = action_agent_task_max_retries
         # self.curriculum_agent = CurriculumAgent(
         #     model_name=curriculum_agent_model_name,
         #     temperature=curriculum_agent_temperature,
@@ -147,8 +147,8 @@ class Foyager:
         #     ckpt_dir=ckpt_dir,
         #     resume=resume,
         # )
-        # self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
-        # self.resume = resume
+        self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
+        self.resume = resume
 
         # init variables for rollout
         self.action_agent_rollout_num_iter = -1
@@ -161,24 +161,41 @@ class Foyager:
     def ping(self):
         return self.env.ping()
 
-    def reset(self, task, context, reset_env=True):
+
+    """
+        The reset method resets the agent's state and the game environment to prepare for a new task. 
+        It initializes the environment, sets the difficulty level, retrieves skills from the skill manager, 
+        and generates system and human messages for communication.
         
+        Args:
+            task: idk
+            context: idk
+            reset_env: Whether we should hard reset the environment
+            
+        Returns:
+            messages: idk
+    """
+    def reset(self, task, context="", reset_env=True):
         self.action_agent_rollout_num_iter = 0
         self.task = task
         self.context = context
         if reset_env:
             self.env.reset(
-                options={}
+                options={
+                    "mode": "soft",
+                    "wait_ticks": self.env_wait_ticks,
+                }
             )
-`       
+
+        
+        # events = self.env.step()
         skills = self.skill_manager.retrieve_skills(query=self.context)
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )
-        events = None
         system_message = self.action_agent.render_system_message(skills=skills)
         human_message = self.action_agent.render_human_message(
-            events=events, code="", task=self.task, context=context, critique=""
+            events=[], code="", task=self.task, context=context, critique=""
         )
         self.messages = [system_message, human_message]
         print(
@@ -190,17 +207,37 @@ class Foyager:
 
     def close(self):
         self.env.close()
-
+    
+    """
+    The step method performs a single step in the task execution process. 
+    It generates an AI message using the action agent, processes the message, executes the code in the game environment, 
+    checks task success using the critic agent, and updates the system and human messages for the next step.
+        
+    Args:
+        None 
+        
+    Returns:
+        messages: idk, 
+        num: 0(idk), 
+        bool: If the task is done
+        info: idk
+    """
     def step(self):
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
+        
         ai_message = self.action_agent.llm(self.messages)
+        
         print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
+        
         self.conversations.append(
             (self.messages[0].content, self.messages[1].content, ai_message.content)
         )
+        
         parsed_result = self.action_agent.process_ai_message(message=ai_message)
         success = False
+        
+        
         if isinstance(parsed_result, dict):
             code = parsed_result["program_code"] + "\n" + parsed_result["exec_code"]
             events = self.env.step(
@@ -276,6 +313,24 @@ class Foyager:
             )
         return self.messages, 0, done, info
 
+
+    """
+    The `rollout` method executes a complete task rollout by repeatedly calling the `step` method until the task is completed
+    or a maximum number of iterations is reached. It returns the final messages, reward, completion status,
+    and additional information about the rollout.
+    
+    Args:
+        *: idk
+         task: the task to complete
+         context: idk
+         reset_env: Whether to hard reset the environment     
+        
+    Returns:
+        messages: idk, 
+        reward: idk (presumably some type of reward), 
+        context: idk
+        info: idk
+    """
     def rollout(self, *, task, context, reset_env=True):
         self.reset(task=task, context=context, reset_env=reset_env)
         while True:
@@ -283,7 +338,21 @@ class Foyager:
             if done:
                 break
         return messages, reward, done, info
-
+    
+    """
+    The learn method is the main training loop of the Voyager system. It proposes the next task using the curriculum agent,
+    performs rollouts for the proposed task, handles task completion or failure, and manages the curriculum and skill manager.
+    
+    Args:
+        reset_env: Whether to hard reset the environment     
+        
+    Returns:
+        {
+            "completed_tasks": self.curriculum_agent.completed_tasks,
+            "failed_tasks": self.curriculum_agent.failed_tasks,
+            "control_primitives": self.skill_manager.skills,
+        }
+    """
     def learn(self, reset_env=True):
         if self.resume:
             # keep the inventory
@@ -371,7 +440,21 @@ class Foyager:
             "failed_tasks": self.curriculum_agent.failed_tasks,
             "control_primitives": self.skill_manager.skills,
         }
-
+        
+    """
+    The inference method is used for inference mode, where the agent performs tasks without learning. 
+    It takes a specific task and a set of sub-tasks, resets the environment, executes the sub-tasks one by one, 
+    handles task completion or failure, and provides early stopping based on specified conditions.
+    
+    Args:
+        task, 
+        reset_mode="hard", 
+        reset_env=True, 
+        early_stop=False, 
+        sub_tasks=None
+    Returns:
+        None
+    """
     def inference(
         self, task, reset_mode="hard", reset_env=True, early_stop=False, sub_tasks=None
     ):
