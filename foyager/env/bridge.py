@@ -4,9 +4,9 @@ import warnings
 from typing import SupportsFloat, Any, Tuple, Dict
 from server.server import FactorioServer
 from rcon.source import Client
-import requests
 import json
 import utils as U
+import uuid
 
 # We will not be using a javascript server
 class FoyagerEnv():
@@ -29,16 +29,18 @@ class FoyagerEnv():
 
     def step(
         self,
-        name: str,
+        function_name: str,
         code: str
-    ):
+    ) -> json:
+        
+        message_id = uuid.uuid4()
+        self.client.run(f"/c remote.call('scripts', 'load_script', {message_id}, '{function_name}', '{code}'")
+        
+        return self.get_response(message_id)
 
-        res = self.client.run(f"/c remote.call('scripts', 'load_script', 1, '{name}', '{code}'")
-
-        if res.status_code != 200:
-            raise RuntimeError("Failed to step Factorio server")
-        returned_data = res.json()
-        return json.loads(returned_data)
+    def get_response(message_id) -> json:
+        # Scrape the factorio log file here, return as json (idk the format)
+        raise NotImplementedError()
 
     def render(self):
         raise NotImplementedError("render is not implemented")
