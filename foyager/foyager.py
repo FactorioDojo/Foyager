@@ -106,6 +106,7 @@ class Foyager:
         self.env_wait_ticks = env_wait_ticks
         self.reset_placed_if_failed = reset_placed_if_failed
         self.max_iterations = max_iterations
+        self.resume = resume
 
         # set openai api key
         os.environ["OPENAI_API_KEY"] = openai_api_key
@@ -120,35 +121,35 @@ class Foyager:
             chat_log=action_agent_show_chat_log,
             execution_error=action_agent_show_execution_error,
         )
-        # self.action_agent_task_max_retries = action_agent_task_max_retries
-        # self.curriculum_agent = CurriculumAgent(
-        #     model_name=curriculum_agent_model_name,
-        #     temperature=curriculum_agent_temperature,
-        #     qa_model_name=curriculum_agent_qa_model_name,
-        #     qa_temperature=curriculum_agent_qa_temperature,
-        #     request_timout=openai_api_request_timeout,
-        #     ckpt_dir=ckpt_dir,
-        #     resume=resume,
-        #     mode=curriculum_agent_mode,
-        #     warm_up=curriculum_agent_warm_up,
-        #     core_inventory_items=curriculum_agent_core_inventory_items,
-        # )
+        self.action_agent_task_max_retries = action_agent_task_max_retries
+        self.curriculum_agent = CurriculumAgent(
+            model_name=curriculum_agent_model_name,
+            temperature=curriculum_agent_temperature,
+            qa_model_name=curriculum_agent_qa_model_name,
+            qa_temperature=curriculum_agent_qa_temperature,
+            request_timout=openai_api_request_timeout,
+            ckpt_dir=ckpt_dir,
+            resume=resume,
+            mode=curriculum_agent_mode,
+            warm_up=curriculum_agent_warm_up,
+            core_inventory_items=curriculum_agent_core_inventory_items,
+        )
         # self.critic_agent = CriticAgent(
         #     model_name=critic_agent_model_name,
         #     temperature=critic_agent_temperature,
         #     request_timout=openai_api_request_timeout,
         #     mode=critic_agent_mode,
         # )
-        # self.skill_manager = SkillManager(
-        #     model_name=skill_manager_model_name,
-        #     temperature=skill_manager_temperature,
-        #     retrieval_top_k=skill_manager_retrieval_top_k,
-        #     request_timout=openai_api_request_timeout,
-        #     ckpt_dir=ckpt_dir,
-        #     resume=resume,
-        # )
-        # self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
-        # self.resume = resume
+        self.skill_manager = SkillManager(
+            model_name=skill_manager_model_name,
+            temperature=skill_manager_temperature,
+            retrieval_top_k=skill_manager_retrieval_top_k,
+            request_timout=openai_api_request_timeout,
+            ckpt_dir=ckpt_dir,
+            resume=resume,
+        )
+        self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
+        self.resume = resume
 
         # init variables for rollout
         self.action_agent_rollout_num_iter = -1
@@ -301,7 +302,7 @@ class Foyager:
                 }
             )
             self.resume = True
-        self.last_events = self.env.step("")
+        self.last_events = None
 
         while True:
             if self.recorder.iteration > self.max_iterations:
@@ -309,7 +310,6 @@ class Foyager:
                 break
             task, context = self.curriculum_agent.propose_next_task(
                 events=self.last_events,
-                chest_observation=self.action_agent.render_chest_observation(),
                 max_retries=5,
             )
             print(
@@ -327,15 +327,7 @@ class Foyager:
                     "success": False,
                 }
                 # reset inventory here
-                self.last_events = self.env.reset(
-                    options={
-                        "mode": "hard",
-                        "wait_ticks": self.env_wait_ticks,
-                        "inventory": self.last_events[-1][1]["inventory"],
-                        "equipment": self.last_events[-1][1]["status"]["equipment"], #TODO: No equipment
-                        "position": self.last_events[-1][1]["status"]["position"],
-                    }
-                )
+                self.last_events = self.env.reset()
                 # use red color background to print the error
                 print("Your last round rollout terminated due to error:")
                 print(f"\033[41m{e}\033[0m")
