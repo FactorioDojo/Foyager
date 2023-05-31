@@ -26,7 +26,20 @@ class FoyagerEnv():
         with self.client as client:
             for entity in entities:
                 client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}') ")
-
+                
+                
+    """
+    Sends a script to the factorio engine to be loaded and executed
+    
+    Args:
+        function_name: The name of the script function to be loaded
+        code: Script code
+    Returns:
+        json : {
+            'load_script_response' : load_script_response,
+            'execute_script_response': execute_script_response
+        }
+    """
     def step(
         self,
         function_name: str,
@@ -40,13 +53,46 @@ class FoyagerEnv():
         self.client.run(f"/c remote.call('scipts', 'execute_script', '{execute_message_id}', '{function_name})")
         return self.get_response(load_message_id, execute_message_id)
 
-    def get_response(self, message_id) -> json:
+
+    """
+    Get the response for loading and executing a script from the Factorio engine
+    
+    Args:
+        load_message_id: The message id to attach to log outputs for loading the script
+        execute_message_id: The message id to attach to log outputs for executing the script
+    Returns:
+        json : {
+            'load_script_response' : load_script_response,
+            'execute_script_response': execute_script_response
+        }
+    """
+    def get_response(
+        self,
+        load_message_id,
+        execute_message_id
+    ) -> json:
         
         if not os.path.isfile():
             raise FileNotFoundError(self.log_path + " cannot be found")
         else:
             with open(self.log_path) as f:
                 content = f.read().splitlines()
+                # Find lines containing load_message_id and execute_message_id
+                
+                load_script_response = ""
+                execute_script_response = ""
+                
+                for line in content:
+                    if load_message_id in line:
+                        load_script_response += line + '\n'
+                    elif execute_message_id in line:
+                        execute_script_response += line + '\n'
+                        
+                r = json.loads({'load_script_response' : load_script_response, 'execute_script_response': execute_script_response})
+                
+                
+                 
+                 
         raise NotImplementedError()
 
     def render(self):
@@ -56,13 +102,14 @@ class FoyagerEnv():
     Resets the factorio environment.
     
     Args:
-        options: options={
+        options={
                     "mode": "soft"/"hard",
                     "wait_ticks": How many ticks to wait,
+                }
     Returns:
         None
     """
-    def reset(self,options=None,):
+    def reset(self,options=None):
         if options["mode"] == "soft":
             # reload mods to wipe game state
             with self.client as client:
