@@ -2,7 +2,6 @@ import os.path
 import time
 import warnings
 from typing import SupportsFloat, Any, Tuple, Dict
-from server.server import FactorioServer
 from rcon.source import Client
 import requests
 import json
@@ -20,7 +19,6 @@ class FoyagerEnv():
         log_path="./logs",
     ):
         self.client = Client(server_ip, rcon_port, passwd=rcon_password)
-        self.server = FactorioServer(self.client)
 
     def observe(self,entities):
         with self.client as client:
@@ -50,10 +48,3 @@ class FoyagerEnv():
             with self.client as client:
                 client.run(f"/c game.reload_mods()")
 
-    #     returned_data = self.check_process()
-    #     self.has_reset = True
-    #     self.connected = True
-    #     # All the reset in step will be soft
-    #     self.reset_options["reset"] = "soft"
-    #     self.pause()
-    #     return json.loads(returned_data)
