@@ -1,6 +1,7 @@
 require ("util")
 task = require ("tasks")
-scripts = require("scripts") 
+scripts = require("scripts")
+writeouts = require("writeouts")
 last_positions = {}
 
 

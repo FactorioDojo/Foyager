@@ -2,15 +2,11 @@
 
 # Set the source and destination paths
 source_folder_1="agent-actions"
-source_folder_2="agent-writeouts"
 destination_folder="$HOME/Library/Application Support/factorio/mods"
 version="0.1.0"
 mod_name_1="agent-actions"
-mod_name_2="agent-writeouts"
 zip_file_1="${mod_name_1}_${version}.zip"
-zip_file_2="${mod_name_2}_${version}.zip"
 temp_folder_1="${mod_name_1}_${version}"
-temp_folder_2="${mod_name_2}_${version}"
 
 copy_flag=false
 custom_destination_folder=""
@@ -87,34 +83,3 @@ fi
 # Clean up
 popd
 rm -rf "$temp_folder_1"
-
-# Repeat for the second source folder
-
-if [ ! -d "$source_folder_2" ]; then
-    echo "Source folder \"$source_folder_2\" does not exist."
-    exit 1
-fi
-
-if [ -f "$destination_folder/$zip_file_2" ]; then
-    rm "$destination_folder/$zip_file_2"
-fi
-
-mkdir "$temp_folder_2"
-
-cp -R "$source_folder_2" "$temp_folder_2"
-
-pushd "$temp_folder_2"
-
-zip -r "../$zip_file_2" .
-
-mv "../$zip_file_2" "$destination_folder"
-
-if $copy_flag; then
-    if [ -f "$custom_destination_folder/$zip_file_2" ]; then
-        rm "$custom_destination_folder/$zip_file_2"
-    fi
-    cp "$destination_folder/$zip_file_2" "$custom_destination_folder"
-fi
-
-popd
-rm -rf "$temp_folder_2"
