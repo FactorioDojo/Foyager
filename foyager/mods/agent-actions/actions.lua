@@ -9,22 +9,25 @@ require("lib/log_utils")
 --   refineries - direction indicates the side where the fluids output
 --   pumps      - direction indicates the side where the fluid is input
 local function build(p, position, item, direction)
+
+    clog("Info: called build() function")
 	-- Check if we have the item
 	if p.get_item_count(item) == 0 then
-		debug(p, string.format("build: not enough items: %d", state))
+        clog("Error: not enough items in player inventory to build item")
+		-- debug(p, string.format("build: not enough items: %d", state))
 		return false
 	end
 
 	-- Grenade special stuff (untested in 0.18)
-	if item == "grenade" then
-		p.update_selected_entity(position)
-		if not p.selected then
-			return false
-		end
-		p.surface.create_entity{name = item, position = p.position, target=p.selected, force="player", speed=0.35}
-		p.remove_item({name = item, count = 1})
-		return true
-	end
+	-- if item == "grenade" then
+	-- 	p.update_selected_entity(position)
+	-- 	if not p.selected then
+	-- 		return false
+	-- 	end
+	-- 	p.surface.create_entity{name = item, position = p.position, target=p.selected, force="player", speed=0.35}
+	-- 	p.remove_item({name = item, count = 1})
+	-- 	return true
+	-- end
 
 	--Failed attempt to lay bricks. Work-in-progress
 	--if item == "stone-brick" then
@@ -64,18 +67,21 @@ local function build(p, position, item, direction)
 				--order events are processed, possibly a race condition (on_tick vs on_player_mined_entity)
 				--Hey also, can_fast_replace does not do distance checking, so it could be
 				--cheaty here if I were dishonest. (Is this still true in 0.18?)
-				state = state - 1
+				-- state = state - 1
 			end
 		else
 			asm = p.surface.create_entity{name = item, position = position, direction = direction, force="player"}
 		end
 	else
+        clog("Error: cannot build item at position")
 		--debug(p, string.format("build: cannot place: %d", state))
 		return false
 	end
 	if asm then
 		p.remove_item({name = item, count = 1})
 	end
+
+    clog("Info: successfully built item at position")
 	return true
 end
 
