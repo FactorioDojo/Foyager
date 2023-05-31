@@ -44,18 +44,30 @@ class FoyagerEnv():
 
     def render(self):
         raise NotImplementedError("render is not implemented")
-
+    
+    """
+    Resets the factorio environment.
+    
+    Args:
+        options: options={
+                    "mode": "soft"/"hard",
+                    "wait_ticks": How many ticks to wait,
+    Returns:
+        None
+    """
     def reset(self,options=None,):
-        if options is None:
-            options = {}
+        if options["mode"] == "soft":
             # reload mods to wipe game state
             with self.client as client:
                 client.run(f"/c game.reload_mods()")
+        elif options["mode"] == "hard":
+            # TODO: Run console command to wipe (((everything)))
+            raise NotImplementedError()
 
-    #     returned_data = self.check_process()
-    #     self.has_reset = True
-    #     self.connected = True
-    #     # All the reset in step will be soft
-    #     self.reset_options["reset"] = "soft"
-    #     self.pause()
-    #     return json.loads(returned_data)
+        if options["wait_ticks"] != 0:
+            # TODO: Have the agent idle for a number of ticks
+            raise NotImplementedError()
+        
+        self.has_reset = True
+        # All the reset in step will be soft
+        self.reset_options["reset"] = "soft"
