@@ -34,8 +34,8 @@ class FoyagerEnv():
     ) -> json:
         
         message_id = uuid.uuid4()
-        self.client.run(f"/c remote.call('scripts', 'load_script', {message_id}, '{function_name}', '{code}'")
-        
+        self.client.run(f"/c remote.call('scripts', 'load_script', '{message_id}', '{function_name}', '{code}'")
+        self.client.run(f"/c remote.call('scipts', 'execute_script', '{message_id}', '{function_name})")
         return self.get_response(message_id)
 
     def get_response(message_id) -> json:
