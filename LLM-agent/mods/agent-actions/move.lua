@@ -37,27 +37,43 @@ function move(x,y)
     local surface = game.get_surface("nauvis")
     local character = game.get_player(1).character
     local position = {x = x, y = y}
-    game.get_player(1).print(position.x)
-    game.get_player(1).print(position.y)
+    local cm = {
+      "player-layer",
+      "train-layer",
+      "consider-tile-transitions",
+      --"water-tile",
+      --"object-layer"
+  }
+    ---
+    t = (character.bounding_box)
     
     --probable reason for pathing over water is collision masks.
     --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+
+    pos = character.position
+    local bbox ={{pos.x - 0.1, pos.y - 0.1},{pos.x + 0.1, pos.y + 0.1}}
+    local bbox2 = {{-0.1,-0.1},{0.1,0.1}}
     surface.request_path{
-        bounding_box = character.bounding_box,
-        collision_mask = character.prototype.collision_mask,
+        bounding_box = t,
+        collision_mask = cm,
         start = character.position,
         goal = position,
         force = "player",
+        radius = 2,
         path_resolution_modifier = 0
     }
   end
 
 -- Initializes the movement process when the path is received.
 script.on_event(defines.events.on_script_path_request_finished, function (event)
-    character_is_moving = true
-    path = event.path
-    path_index = 1
-    game.get_player(1).print(#path)
+    if event.path then
+        character_is_moving = true
+        path = event.path
+        path_index = 1
+        game.get_player(1).print(#path)
+    else 
+        game.players[1].print("No path found")
+    end
 end)
 
 -- Moves the character.
