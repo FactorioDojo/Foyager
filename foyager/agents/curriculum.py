@@ -55,8 +55,7 @@ class CurriculumAgent:
             self.failed_tasks = []
             self.qa_cache = {}
         # vectordb for qa cache
-        self.qa_cache_questions_vectordb = None
-        Chroma(
+        self.qa_cache_questions_vectordb = Chroma(
             collection_name="qa_cache_questions_vectordb",
             embedding_function=OpenAIEmbeddings(),
             persist_directory=f"{ckpt_dir}/curriculum/vectordb",
@@ -238,10 +237,10 @@ class CurriculumAgent:
         print(f"\033[35m****Curriculum Agent human message****\n{content}\033[0m")
         return HumanMessage(content=content)
 
-    def propose_next_task(self, *, events, chest_observation, max_retries=5):
-        if self.progress == 0 and self.mode == "auto":
-            task = "Mine 1 wood log"
-            context = "You can mine one of oak, birch, spruce, jungle, acacia, dark oak, or mangrove logs."
+    def propose_next_task(self, *, events, max_retries=5):
+        if not events or self.progress == 0 and self.mode == "auto":
+            task = "Mine coal"
+            context = "You will need coal to smelt run any drills or furnaces."
             return task, context
 
         # hard code task when inventory is almost full
@@ -263,7 +262,7 @@ class CurriculumAgent:
         messages = [
             self.render_system_message(),
             self.render_human_message(
-                events=events, chest_observation=chest_observation
+                events=events
             ),
         ]
 
@@ -337,7 +336,7 @@ class CurriculumAgent:
             SystemMessage(
                 content=load_prompt("curriculum_task_decomposition"),
             ),
-            self.render_human_message(events=events, chest_observation=""),
+            self.render_human_message(events=events),
             HumanMessage(content=f"Final task: {task}"),
         ]
         print(
@@ -402,9 +401,9 @@ class CurriculumAgent:
     def render_system_message_qa_step1_ask_questions(self):
         return SystemMessage(content=load_prompt("curriculum_qa_step1_ask_questions"))
 
-    def render_human_message_qa_step1_ask_questions(self, *, events, chest_observation):
+    def render_human_message_qa_step1_ask_questions(self, *, events):
         observation = self.render_observation(
-            events=events, chest_observation=chest_observation
+            events=events
         )
         content = ""
         for key in self.curriculum_observations:
@@ -422,7 +421,7 @@ class CurriculumAgent:
         messages = [
             self.render_system_message_qa_step1_ask_questions(),
             self.render_human_message_qa_step1_ask_questions(
-                events=events, chest_observation=chest_observation
+                events=events
             ),
         ]
         qa_response = self.qa_llm(messages).content
