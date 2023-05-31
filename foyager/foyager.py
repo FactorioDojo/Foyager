@@ -170,7 +170,6 @@ class Foyager:
             self.env.reset(
                 options={}
             )
-`       
         skills = self.skill_manager.retrieve_skills(query=self.context)
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
