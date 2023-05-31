@@ -52,15 +52,16 @@ function move(x,y)
     --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
 
     pos = character.position
-    --local bbox ={{pods.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
-    --local bbox2 = {`{-0.1,-0.1},{0.1,0.1}}
+    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
+    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
     surface.request_path{
-        bounding_box = t,
-        collision_mask = collision_mask,
+        bounding_box = bbox2,
+        collision_mask = {"water-tile"},
         start = character.position,
         goal = position,
         force = "player",
-        path_resolution_modifier = 2
+        radius = 3.0,
+        path_resolution_modifier = 0
     }
   end
 
