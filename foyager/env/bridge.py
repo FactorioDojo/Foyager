@@ -2,7 +2,6 @@ import os.path
 import time
 import warnings
 from typing import SupportsFloat, Any, Tuple, Dict
-from server.server import FactorioServer
 from rcon.source import Client
 import json
 import utils as U
