@@ -7,5 +7,5 @@
   "contact": "None",
   "homepage": "None",
   "description": "Provides an interface for sending remote commands to factorio",
-  "dependencies": [ "base >= 1.1"]
+  "dependencies": [ "base >= 1.1", "MiscLib>=0.9.2"]
 }

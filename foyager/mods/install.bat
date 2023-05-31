@@ -3,15 +3,11 @@ setlocal
 
 REM Set the source and destination paths
 set "source_folder_1=agent-actions"
-set "source_folder_2=agent-writeouts"
 set "destination_folder=%APPDATA%\Factorio\mods"
 set "version=0.1.0"
 set "mod_name_1=agent-actions"
-set "mod_name_2=agent-writeouts"
 set "zip_file_1=%mod_name_1%_%version%.zip"
-set "zip_file_2=%mod_name_2%_%version%.zip"
 set "temp_folder_1=%mod_name_1%_%version%"
-set "temp_folder_2=%mod_name_2%_%version%"
 
 REM Repeat the following steps for each source folder
 
@@ -44,30 +40,6 @@ move "%zip_file_1%" "%destination_folder%"
 REM Clean up
 popd
 rmdir /s /q "%temp_folder_1%"
-
-REM Repeat for the second source folder
-
-if not exist "%source_folder_2%" (
-    echo Source folder "%source_folder_2%" does not exist.
-    exit /b
-)
-
-if exist "%destination_folder%\%zip_file_2%" (
-    del "%destination_folder%\%zip_file_2%"
-)
-
-mkdir "%temp_folder_2%"
-
-xcopy /e /i "%source_folder_2%" "%temp_folder_2%"
-
-pushd "."
-
-powershell -noprofile -command "Compress-Archive -Path '%temp_folder_2%' -DestinationPath '%zip_file_2%' -Force"
-
-move "%zip_file_2%" "%destination_folder%"
-
-popd
-rmdir /s /q "%temp_folder_2%"
 
 endlocal
 
