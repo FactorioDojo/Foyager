@@ -7,6 +7,8 @@ import json
 import utils as U
 import uuid
 
+ENTITIES = ['resource','transport-belts']
+
 # We will not be using a javascript server
 class FoyagerEnv():
     def __init__(
@@ -16,6 +18,7 @@ class FoyagerEnv():
         rcon_password= None,
         player_id=1,
         log_path="/opt/factorio/factorio-current.log",
+        
     ):
         self.player_id = player_id
         self.log_path = log_path
@@ -88,12 +91,8 @@ class FoyagerEnv():
                         execute_script_response += line + '\n'
                         
                 r = json.loads({'load_script_response' : load_script_response, 'execute_script_response': execute_script_response})
+                return r
                 
-                
-                 
-                 
-        raise NotImplementedError()
-
     def render(self):
         raise NotImplementedError("render is not implemented")
     
@@ -108,19 +107,17 @@ class FoyagerEnv():
     Returns:
         None
     """
-    def reset(self,options=None):
-        if options["mode"] == "soft":
+    def reset(self,options={}):
+
+        if options.get("mode") == "soft":
             # reload mods to wipe game state
             with self.client as client:
                 client.run(f"/c game.reload_mods()")
-        elif options["mode"] == "hard":
-            # TODO: Run console command to wipe (((everything)))
-            raise NotImplementedError()
 
-        if options["wait_ticks"] != 0:
-            # TODO: Have the agent idle for a number of ticks
-            raise NotImplementedError()
-        
-        self.has_reset = True
-        # All the reset in step will be soft
-        self.reset_options["reset"] = "soft"
+        # hard reset, re observe state, reload and wait
+        elif options.get("mode") == "hard":
+            self.observe(self,ENTITIES)
+            with self.client as client:
+                client.run(f"/c game.reload_mods()")
+            if options.get("wait_ticks") != 0:
+                time.sleep(options.get("wait_ticks"))
