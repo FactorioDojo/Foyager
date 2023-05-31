@@ -101,7 +101,6 @@ class Foyager:
             server_ip=server_ip,
             rcon_port=rcon_port,
             rcon_password=rcon_password,
-            request_timeout=env_request_timeout,
         )
         self.env_wait_ticks = env_wait_ticks
         self.reset_placed_if_failed = reset_placed_if_failed
@@ -359,12 +358,7 @@ class Foyager:
             )
         else:
             # clear the inventory
-            self.env.reset(
-                options={
-                    "mode": "hard",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset()
             self.resume = True
         self.last_events = None
 
@@ -379,22 +373,22 @@ class Foyager:
             print(
                 f"\033[35mStarting task {task} for at most {self.action_agent_task_max_retries} times\033[0m"
             )
-            try:
-                messages, reward, done, info = self.rollout(
+
+            messages, reward, done, info = self.rollout(
                     task=task,
                     context=context,
                     reset_env=reset_env,
                 )
-            except Exception as e:
-                time.sleep(3)  # wait for mineflayer to exit
-                info = {
-                    "success": False,
-                }
-                # reset inventory here
-                self.last_events = self.env.reset()
-                # use red color background to print the error
-                print("Your last round rollout terminated due to error:")
-                print(f"\033[41m{e}\033[0m")
+            # except Exception as e:
+            #     time.sleep(3)  # wait for mineflayer to exit
+            #     info = {
+            #         "success": False,
+            #     }
+            #     # reset inventory here
+            #     self.last_events = self.env.reset()
+            #     # use red color background to print the error
+            #     print("Your last round rollout terminated due to error:")
+            #     print(f"\033[41m{e}\033[0m")
             if (
                 task == "Place and deposit useless items into a chest"
                 or task.startswith("Deposit useless items into the chest at")

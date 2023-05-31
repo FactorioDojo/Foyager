@@ -1,4 +1,15 @@
 from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import SystemMessagePromptTemplate
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from prompts import load_prompt
+from sklearn.cluster import MeanShift
+import pandas as pd
+from collections import defaultdict
+import numpy as np
+import json
+
+resources = "/opt/factorio/script-output/resource_data.json"
 
 class ActionAgent:
     def __init__(
@@ -37,8 +48,73 @@ class ActionAgent:
     '''
     def update_inventory_memory(self):
         pass
+
+    def update_resource_memory(self, entities):
+        '''
+        Save resource information to /action/resource_memory.json
+        '''
+
+        # Group entities by type
+        entities_by_type = defaultdict(list)
+        for entity in entities:
+            entities_by_type[entity['entity_type']].append(entity['position'])
+
+        # Calculate bounding box for each entity type
+        result = {}
+        for entity_type, positions in entities_by_type.items():
+            df = pd.DataFrame(positions)
+
+            # Perform Mean Shift clustering
+            ms = MeanShift()
+            clusters = ms.fit_predict(df)
+
+            # Calculate bounding box for each cluster
+            result[entity_type] = []
+            for cluster_id in np.unique(clusters):
+                cluster_positions = df[clusters == cluster_id]
+                min_x = cluster_positions['x'].min()
+                max_x = cluster_positions['x'].max()
+                min_y = cluster_positions['y'].min()
+                max_y = cluster_positions['y'].max()
+
+                result[entity_type].append({
+                    'count': len(cluster_positions),
+                    'bounding_box': {
+                        'min': {'x': min_x, 'y': min_y},
+                        'max': {'x': max_x, 'y': max_y},
+                    }
+                })
+
+        # Save the result to a JSON file
+        with open('/action/resource_memory.json', 'w') as f:
+            json.dump(result, f)
     
-    
+    def render_system_message(self, skills=[]):
+        system_template = load_prompt("action_template")
+        # FIXME: Hardcoded control_primitives
+        base_skills = [
+            "exploreUntil",
+            "mineBlock",
+            "craftItem",
+            "placeItem",
+            "smeltItem",
+            "killMob",
+        ]
+        if not self.llm.model_name == "gpt-3.5-turbo":
+            base_skills += [
+                "useChest",
+                "mineflayer",
+            ]
+        programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
+        response_format = load_prompt("action_response_format")
+        system_message_prompt = SystemMessagePromptTemplate.from_template(
+            system_template
+        )
+        system_message = system_message_prompt.format(
+            programs=programs, response_format=response_format
+        )
+        assert isinstance(system_message, SystemMessage)
+        return system_message
     def process_ai_message(self, message):
         # assert isinstance(message, AIMessage)
 
