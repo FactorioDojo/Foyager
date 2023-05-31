@@ -38,11 +38,11 @@ function move(x,y)
     local character = game.get_player(1).character
     local position = {x = x, y = y}
     local collision_mask = {
+      "water-tile",
+      "object-layer",
       "player-layer",
       "train-layer",
       "consider-tile-transitions",
-      "water-tile",
-      "object-layer"
   }
 
     --
@@ -52,6 +52,8 @@ function move(x,y)
     --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
 
     pos = character.position
+    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
+    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
     local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
     local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
     surface.request_path{
