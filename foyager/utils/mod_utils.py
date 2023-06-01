@@ -9,6 +9,34 @@ from collections import defaultdict
 import numpy as np
 import json
 
+
+import json
+
+def format_resource_json(data):
+    result = {}
+    
+    for item in data:
+        resource_name = item.split('-')[0].strip()
+        resource_data = data[item]
+        formatted_data = ""
+        
+        for entry in resource_data:
+            count = entry['count']
+            bounding_box = entry['bounding_box']
+            min_x = bounding_box['min']['x']
+            min_y = bounding_box['min']['y']
+            max_x = bounding_box['max']['x']
+            max_y = bounding_box['max']['y']
+            
+            formatted_data += f"Count: {count}\n"
+            formatted_data += f"Bounding Box:\n"
+            formatted_data += f"  Min: ({min_x}, {min_y})\n"
+            formatted_data += f"  Max: ({max_x}, {max_y})\n"
+        
+        result[resource_name] = formatted_data
+    
+    return result
+
 def resource_clustering():
     # Group entities by type
     with open(RESOURCES) as f:
@@ -43,11 +71,17 @@ def resource_clustering():
                     }
                 })
         
-        return result
+        return format_resource_json(result)
+    
+def process_simple_entity():
+    with open(BASE+'/simple-entity.json') as f:
+        data =  list(json.load(f))
+
+
     
 
 # read in the entities from entity type list
 def process_filtered_entity(entity: str):
-    with open(f"{BASE}{entity}_data.json") as data:
+    with open(f"{BASE}/{entity}_data.json") as data:
         return json.load(data)
 

@@ -68,8 +68,8 @@ class ActionAgent:
         # FIXME: Hardcoded control_primitives
         base_skills = [
             "move",
-            "mine_resource",
-            "route_belt",
+            "craft",
+            "build",
         ]
  
         programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
@@ -81,6 +81,7 @@ class ActionAgent:
             programs=programs, response_format=response_format
         )
         assert isinstance(system_message, SystemMessage)
+        print(system_message)
         return system_message
 
     def process_ai_message(self, message):

@@ -1,41 +1,41 @@
-local moving = true
-
-function move(x, y)
-    local player = game.players[1] -- Assuming it's the first player, you can adjust this based on your needs
+-- move player to position x,y
+-- ex usage, move(0,0)
+function move(x,y)
+    local surface = game.get_surface("nauvis")
+    local character = game.get_player(1).character
     local position = {x = x, y = y}
+    local collision_mask = {
+      "water-tile",
+      "object-layer",
+      "player-layer",
+      "train-layer",
+      "consider-tile-transitions",
+  }
+
+    --
+    t = character.bounding_box
     
-    -- Request path with high priority
-    local path = player.surface.request_path{
-      bounding_box = {{player.position.x, player.position.y}, position},
-      force = defines.force.player,
-      radius = 1,
-      collision_mask = {"player-layer"},
-      path_resolution_modifier = 0 -- Use the highest path resolution
+    --probable reason for pathing over water is collision masks.
+    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+
+    pos = character.position
+    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
+    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
+    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
+    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+
+    global.path_received = false
+
+
+    surface.request_path{
+        bounding_box = bbox2,
+        collision_mask = {"water-tile"},
+        start = character.position,
+        goal = position,
+        force = "player",
+        radius = 3.0,
+        path_resolution_modifier = 0
     }
-  
-    -- Start walking if path is valid
-    if path then
-      player.walking_state = {
-        walking = true,
-        path = path
-      }
-    end
-  end
-  
-  -- Event handler to update walking state
-  script.on_nth_tick(1, function(event)
-    if moving then
-        local player = game.players[1] -- Assuming it's the first player, you can adjust this based on your needs
-        
-        if player.walking_state and player.walking_state.walking then
-        player.walking_state.path = player.walking_state.path:sub(2) -- Remove the first position in the path
-        if #player.walking_state.path > 0 then
-            player.walking_state.destination = player.walking_state.path[1]
-        else
-            player.walking_state = nil -- Clear walking state if path is completed
-            moving = false
-        end
-        end
-    end
-  end)
-  
+
+    subscribe_on_tick_event(on_tick_move_event)
+end
