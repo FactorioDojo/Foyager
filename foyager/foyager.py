@@ -189,6 +189,9 @@ class Foyager:
         )
 
         system_message = self.action_agent.render_system_message(skills=skills)
+        print(
+            f"\023[32m****Action System message****\n{system_message.content}\023[0m"
+        )
         human_message = self.action_agent.render_human_message(
             events=events, code="", task=self.task, context=context, critique=""
         )
