@@ -73,14 +73,7 @@ class CurriculumAgent:
         if not warm_up:
             warm_up = self.default_warmup
         self.warm_up = {}
-        if "optional_inventory_items" in warm_up:
-            assert core_inventory_items is not None
-            self._core_inv_items_regex = re.compile(core_inventory_items)
-            self.warm_up["optional_inventory_items"] = warm_up[
-                "optional_inventory_items"
-            ]
-        else:
-            self.warm_up["optional_inventory_items"] = 0
+
         for key in self.curriculum_observations:
             self.warm_up[key] = warm_up.get(key, self.default_warmup[key])
         self.warm_up["nearby_blocks"] = 0
@@ -92,18 +85,12 @@ class CurriculumAgent:
     def default_warmup(self):
         return {
             "context": 15,
-            "biome": 10,
             "time": 15,
-            "nearby_blocks": 0,
-            "other_blocks": 10,
-            "nearby_entities": 5,
+            "resources": 0,
+            "simple_entity": 5,
             "health": 15,
-            "hunger": 15,
             "position": 0,
-            "equipment": 0,
             "inventory": 0,
-            "optional_inventory_items": 7,
-            "chests": 0,
             "completed_tasks": 0,
             "failed_tasks": 0,
         }
@@ -112,17 +99,12 @@ class CurriculumAgent:
     def curriculum_observations(self):
         return [
             "context",
-            "biome",
             "time",
-            "nearby_blocks",
-            "other_blocks",
-            "nearby_entities",
+            "resources",
+            "simple_entity",
             "health",
-            "hunger",
             "position",
-            "equipment",
             "inventory",
-            "chests",
             "completed_tasks",
             "failed_tasks",
         ]
@@ -137,6 +119,7 @@ class CurriculumAgent:
         return system_message
 
     def render_observation(self, *, events, chest_observation):
+        print("EVENT: " + events)
         assert events[-1][0] == "observe", "Last event must be observe"
         event = events[-1][1]
         biome = event["status"]["biome"]
@@ -238,7 +221,7 @@ class CurriculumAgent:
         return HumanMessage(content=content)
 
     def propose_next_task(self, *, events, max_retries=5):
-        if not events or self.progress == 0 and self.mode == "auto":
+        if self.progress == 0 and self.mode == "auto":
             task = "Mine coal"
             context = "You will need coal to smelt run any drills or furnaces."
             return task, context
