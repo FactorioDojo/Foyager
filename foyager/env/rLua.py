@@ -51,20 +51,7 @@ function mine_resource(ore_type, quantity)
     -- Move to ore position
     await move(resource_position)
 
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-
-    -- If the mining process was successful, return true
-    return true
+    for _ in
 end
 
 return mine_resource
@@ -77,24 +64,24 @@ script.on_event({event_id}, function(event)
 '''
 
 
-set_global_table_str = \
-'''
-    {timeline}
-'''
-
-EVENT_SUCCESS = 'event_success'
-EVENT_FAIL = 'event_fail'
+EVENT_SUCCESS = 'global.SCRIPT_SUCCESS_EVENT'
+EVENT_FAIL = 'global.SCRIPT_FAILED_EVENT'
 
 # Unique event names generator
 def generate_name():
     return f"event_{uuid.uuid4().hex}"
     
-
+# TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
 def compile_to_rlua(source_lua):
+
+    # If there is no await keyword in this function, we do not need to compile it to rLua
+    await_kwd = re.search(r'await\s+([a-zA-Z_][a-zA-Z_0-9]*)', source_lua)
+    if not await_kwd:
+        return source_lua
+
 
     # Table of event ptrs
     event_ptrs = {}
-
 
     # Find the last occurrence of "end"
     last_end_index = source_lua.rfind("end")
@@ -171,14 +158,15 @@ def compile_to_rlua(source_lua):
             
             if first_function: first_function = False
         elif return_kwd:
-            true_kwd = re.search(r'return\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
-            false_kwd = re.search(r'return\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
-            function_name_kwd = re.search(r'dickface\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
+            true_kwd = re.search(r'true', line)
+            false_kwd = re.search(r'false', line)
+            function_name_pattern = main_function_name+'\s+([a-zA-Z_][a-zA-Z_0-9]*)'
+            function_name_kwd = re.search(function_name_pattern, line)
             
             if true_kwd:
-                output.append(re.sub(r'(\s*)return(\s*)true', r'\1raise_event({})\2'.format(EVENT_SUCCESS), line))
+                output.append(re.sub(r'(\s*)return(\s*)true', r'\1raise_event({status})\2'.format(status=EVENT_SUCCESS), line))
             elif false_kwd:
-                output.append(re.sub(r'(\s*)return(\s*)false', r'\1raise_event({})\2'.format(EVENT_FAIL), line))
+                output.append(re.sub(r'(\s*)return(\s*)false', r'\1raise_event({status})\2'.format(status=EVENT_FAIL), line))
             elif function_name_kwd:
                 # Remove line
                 pass
