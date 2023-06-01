@@ -1,4 +1,6 @@
-resources = "/opt/factorio/script-output/resource_data.json"
+
+BASE = "/opt/factorio/script-output/"
+RESOURCES = "/opt/factorio/script-output/resource_data.json"
 
 
 from sklearn.cluster import MeanShift
@@ -9,7 +11,7 @@ import json
 
 def resource_clustering():
     # Group entities by type
-    with open(resources) as f:
+    with open(RESOURCES) as f:
         data =  list(json.load(f))
         resource_type = defaultdict(list)
         for entity in data:
@@ -42,4 +44,10 @@ def resource_clustering():
                 })
         
         return result
+    
+
+# read in the entities from entity type list
+def process_filtered_entity(entity: str):
+    with open(f"{BASE}{entity}_data.json") as data:
+        return json.load(data)
 

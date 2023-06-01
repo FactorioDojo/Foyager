@@ -169,27 +169,28 @@ class Foyager:
         Returns:
             messages: idk
     """
-    def reset(self, task, context="", reset_env=True):
+    def reset(self, task, context="", reset_env=True, ):
         self.action_agent_rollout_num_iter = 0
         self.task = task
         self.context = context
         if reset_env:
-            self.env.reset(
-                options={
-                    "mode": "soft",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset(mode='soft',
+                           wait_ticks= self.env_wait_ticks,
+                           refresh_entities=['resources','simple-entitiy']
+                           )
 
         
         # events = self.env.step()
         skills = self.skill_manager.retrieve_skills(query=self.context)
+        #first observation is only does resources and simple-entities
+        events = self.env.step(refresh_entities=['resources','simple-entitiy'])
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )
+
         system_message = self.action_agent.render_system_message(skills=skills)
         human_message = self.action_agent.render_human_message(
-            events=[], code="", task=self.task, context=context, critique=""
+            events=events, code="", task=self.task, context=context, critique=""
         )
         self.messages = [system_message, human_message]
         print(
@@ -350,18 +351,16 @@ class Foyager:
     def learn(self, reset_env=True):
         if self.resume:
             # keep the inventory
-            self.env.reset(
-                options={
-                    "mode": "soft",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset(mode='soft',
+                           wait_ticks= 0,)
         else:
             # clear the inventory
-            self.env.reset()
+            self.env.reset(mode='hard',
+                refresh_entities=['resources','simple-entitiy'],
+                wait_ticks=0)
             self.resume = True
-        self.last_events = None
-
+        self.last_events = self.env.step(refresh_entities=['resources','simple-entitiy'])
+        print(self.last_events)
         while True:
             if self.recorder.iteration > self.max_iterations:
                 print("Iteration limit reached")
