@@ -16,16 +16,16 @@ class FoyagerEnv():
         rcon_password= None,
         player_id=1,
         log_path="/opt/factorio/factorio-current.log",
+        
     ):
         self.player_id = player_id
         self.log_path = log_path
-        self.client = Client(server_ip, rcon_port, passwd=rcon_password)
-
-    def observe(self,entities):
-        with self.client as client:
-            for entity in entities:
-                client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}') ")
-                
+        self.server_ip=server_ip
+        self.rcon_port = rcon_port
+        self.rcon_password = rcon_password
+    def observe(self,entities,client):
+        for entity in entities:
+            client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}')")
                 
     """
     Sends a script to the factorio engine to be loaded and executed
@@ -40,22 +40,42 @@ class FoyagerEnv():
         }
     """
     def step(
-        self,
-        function_name: str,
-        code: str
+    self,
+    function_name: str = "",
+    code: str = "",
+    refresh_entities: list[str] = []
     ) -> json:
-        
-        load_message_id = uuid.uuid4()
-        self.client.run(f"/c remote.call('scripts', 'load_script', '{load_message_id}', '{function_name}', '{code}'")
-        
-        execute_message_id = uuid.uuid4()
-        self.client.run(f"/c remote.call('scipts', 'execute_script', '{execute_message_id}', '{function_name})")
-        return self.get_response(load_message_id, execute_message_id)
+        client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
+        with client as c:
+            if code:
+                    load_message_id = uuid.uuid4()
+                    c.run(f"/c remote.call('scripts', 'load_script', '{load_message_id}', '{function_name}', '{code}'")
+                    
+                    execute_message_id = uuid.uuid4()
+                    c.run(f"/c remote.call('scripts', 'execute_script', '{execute_message_id}', '{function_name})")
+
+            # events is the return value of the command and the state of any entities requested refreshed after the execution        
+            events = []
+            # TODO fix this up. It was breaking with 
+            # command_res = self.get_response(load_message_id, execute_message_id)
+            # events.append(json.load(command_res)            
+            for entity in refresh_entities:
+                if entity == 'resources':
+                    deposits = U.mod_utils.resource_clustering()
+                    event = deposits
+
+                else:
+                    event = U.mod_utils.process_filtered_entity(entity)
+    
+                events.append(event)
+
+        return events
+    
 
 
     """
     Get the response for loading and executing a script from the Factorio engine
-    
+
     Args:
         load_message_id: The message id to attach to log outputs for loading the script
         execute_message_id: The message id to attach to log outputs for executing the script
@@ -66,11 +86,11 @@ class FoyagerEnv():
         }
     """
     def get_response(
-        self,
-        load_message_id,
-        execute_message_id
+    self,
+    load_message_id,
+    execute_message_id
     ) -> json:
-        
+
         if not os.path.isfile():
             raise FileNotFoundError(self.log_path + " cannot be found")
         else:
@@ -88,18 +108,14 @@ class FoyagerEnv():
                         execute_script_response += line + '\n'
                         
                 r = json.loads({'load_script_response' : load_script_response, 'execute_script_response': execute_script_response})
+                return r
                 
-                
-                 
-                 
-        raise NotImplementedError()
-
     def render(self):
         raise NotImplementedError("render is not implemented")
-    
+
     """
     Resets the factorio environment.
-    
+
     Args:
         options={
                     "mode": "soft"/"hard",
@@ -108,19 +124,17 @@ class FoyagerEnv():
     Returns:
         None
     """
-    def reset(self,options=None):
-        if options["mode"] == "soft":
-            # reload mods to wipe game state
-            with self.client as client:
-                client.run(f"/c game.reload_mods()")
-        elif options["mode"] == "hard":
-            # TODO: Run console command to wipe (((everything)))
-            raise NotImplementedError()
+    def reset(self,mode,wait_ticks,refresh_entities):
+        client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
+        with client as c:
+            if mode == "soft":
+                # reload mods to wipe game state
+                c.run(f"/c game.reload_mods()")
 
-        if options["wait_ticks"] != 0:
-            # TODO: Have the agent idle for a number of ticks
-            raise NotImplementedError()
-        
-        self.has_reset = True
-        # All the reset in step will be soft
-        self.reset_options["reset"] = "soft"
+            # hard reset, re observe state, reload and wait
+            elif mode == "hard":
+                self.observe(refresh_entities,client)
+                c.run(f"/c game.reload_mods()")
+                        
+                if wait_ticks != 0:
+                    time.sleep(wait_ticks)

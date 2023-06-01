@@ -1,4 +1,20 @@
 from langchain.chat_models import ChatOpenAI
+from langchain.chat_models import ChatOpenAI
+from langchain.prompts import SystemMessagePromptTemplate
+from langchain.schema import AIMessage, HumanMessage, SystemMessage
+from prompts import load_prompt
+from sklearn.cluster import MeanShift
+import pandas as pd
+from collections import defaultdict
+import numpy as np
+import json
+import utils as U
+from control_primitives_context import load_control_primitives_context
+import regex as re
+import time
+
+resources = "/opt/factorio/script-output/resource_data.json"
+
 
 class ActionAgent:
     def __init__(
@@ -25,20 +41,48 @@ class ActionAgent:
             temperature=temperature,
             request_timeout=request_timout,
         )
-        
-    '''
+
+    """
         Save entity information to /action/entity_memory.json
-    '''
+    """
+
     def update_entity_memory(self):
         pass
-    
-    '''
+
+    """
         Save inventory information to /action/inventory_memory.json
-    '''
+    """
+
     def update_inventory_memory(self):
         pass
-    
-    
+
+    def update_resource_memory(self):
+        """
+        Save resource information to /action/resource_memory.json
+        """
+        deposits = U.mod_utils.resource_clustering()
+        U.dump_json(deposits, f"{self.ckpt_dir}/action/resources.json")
+
+    def render_system_message(self, skills=[]):
+        system_template = load_prompt("action_template")
+        # FIXME: Hardcoded control_primitives
+        base_skills = [
+            "move",
+            "mine_resource",
+            "route_belt",
+        ]
+ 
+        programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
+        response_format = load_prompt("action_response_format")
+        system_message_prompt = SystemMessagePromptTemplate.from_template(
+            system_template
+        )
+        system_message = system_message_prompt.format(
+            programs=programs, response_format=response_format
+        )
+        assert isinstance(system_message, SystemMessage)
+        return system_message
+
     def process_ai_message(self, message):
         # assert isinstance(message, AIMessage)
 
@@ -66,7 +110,7 @@ class ActionAgent:
                     len(main_function["params"]) == 1
                     and main_function["params"][0].name == "bot"
                 ), f"Main function {main_function['name']} must take a single argument named 'bot'"
-                
+
                 program_code = "\n\n".join(function["body"] for function in functions)
                 exec_code = f"await {main_function['name']}(bot);"
 
@@ -86,3 +130,102 @@ class ActionAgent:
                 error = e
                 time.sleep(1)
         return f"Error parsing action response (before program execution): {error}"
+    
+    def render_human_message(
+        self, *, events, code="", task="", context="", critique=""
+    ):
+        chat_messages = []
+        error_messages = []
+        # FIXME: damage_messages is not used
+        damage_messages = []
+        assert events[-1][0] == "observe", "Last event must be observe"
+        for i, (event_type, event) in enumerate(events):
+            if event_type == "onChat":
+                chat_messages.append(event["onChat"])
+            elif event_type == "onError":
+                error_messages.append(event["onError"])
+            elif event_type == "onDamage":
+                damage_messages.append(event["onDamage"])
+            elif event_type == "observe":
+                biome = event["status"]["biome"]
+                time_of_day = event["status"]["timeOfDay"]
+                voxels = event["voxels"]
+                entities = event["status"]["entities"]
+                health = event["status"]["health"]
+                hunger = event["status"]["food"]
+                position = event["status"]["position"]
+                equipment = event["status"]["equipment"]
+                inventory_used = event["status"]["inventoryUsed"]
+                inventory = event["inventory"]
+                assert i == len(events) - 1, "observe must be the last event"
+
+        observation = ""
+
+        if code:
+            observation += f"Code from the last round:\n{code}\n\n"
+        else:
+            observation += f"Code from the last round: No code in the first round\n\n"
+
+        if self.execution_error:
+            if error_messages:
+                error = "\n".join(error_messages)
+                observation += f"Execution error:\n{error}\n\n"
+            else:
+                observation += f"Execution error: No error\n\n"
+
+        if self.chat_log:
+            if chat_messages:
+                chat_log = "\n".join(chat_messages)
+                observation += f"Chat log: {chat_log}\n\n"
+            else:
+                observation += f"Chat log: None\n\n"
+
+        observation += f"Biome: {biome}\n\n"
+
+        observation += f"Time: {time_of_day}\n\n"
+
+        if voxels:
+            observation += f"Nearby blocks: {', '.join(voxels)}\n\n"
+        else:
+            observation += f"Nearby blocks: None\n\n"
+
+        if entities:
+            nearby_entities = [
+                k for k, v in sorted(entities.items(), key=lambda x: x[1])
+            ]
+            observation += f"Nearby entities (nearest to farthest): {', '.join(nearby_entities)}\n\n"
+        else:
+            observation += f"Nearby entities (nearest to farthest): None\n\n"
+
+        observation += f"Health: {health:.1f}/20\n\n"
+
+        observation += f"Hunger: {hunger:.1f}/20\n\n"
+
+        observation += f"Position: x={position['x']:.1f}, y={position['y']:.1f}, z={position['z']:.1f}\n\n"
+
+        observation += f"Equipment: {equipment}\n\n"
+
+        if inventory:
+            observation += f"Inventory ({inventory_used}/36): {inventory}\n\n"
+        else:
+            observation += f"Inventory ({inventory_used}/36): Empty\n\n"
+
+        if not (
+            task == "Place and deposit useless items into a chest"
+            or task.startswith("Deposit useless items into the chest at")
+        ):
+            observation += self.render_chest_observation()
+
+        observation += f"Task: {task}\n\n"
+
+        if context:
+            observation += f"Context: {context}\n\n"
+        else:
+            observation += f"Context: None\n\n"
+
+        if critique:
+            observation += f"Critique: {critique}\n\n"
+        else:
+            observation += f"Critique: None\n\n"
+
+        return HumanMessage(content=observation)

@@ -101,7 +101,6 @@ class Foyager:
             server_ip=server_ip,
             rcon_port=rcon_port,
             rcon_password=rcon_password,
-            request_timeout=env_request_timeout,
         )
         self.env_wait_ticks = env_wait_ticks
         self.reset_placed_if_failed = reset_placed_if_failed
@@ -170,27 +169,28 @@ class Foyager:
         Returns:
             messages: idk
     """
-    def reset(self, task, context="", reset_env=True):
+    def reset(self, task, context="", reset_env=True, ):
         self.action_agent_rollout_num_iter = 0
         self.task = task
         self.context = context
         if reset_env:
-            self.env.reset(
-                options={
-                    "mode": "soft",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset(mode='soft',
+                           wait_ticks= self.env_wait_ticks,
+                           refresh_entities=['resources','simple-entitiy']
+                           )
 
         
         # events = self.env.step()
         skills = self.skill_manager.retrieve_skills(query=self.context)
+        #first observation is only does resources and simple-entities
+        events = self.env.step(refresh_entities=['resources','simple-entitiy'])
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )
+
         system_message = self.action_agent.render_system_message(skills=skills)
         human_message = self.action_agent.render_human_message(
-            events=[], code="", task=self.task, context=context, critique=""
+            events=events, code="", task=self.task, context=context, critique=""
         )
         self.messages = [system_message, human_message]
         print(
@@ -351,23 +351,16 @@ class Foyager:
     def learn(self, reset_env=True):
         if self.resume:
             # keep the inventory
-            self.env.reset(
-                options={
-                    "mode": "soft",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset(mode='soft',
+                           wait_ticks= 0,)
         else:
             # clear the inventory
-            self.env.reset(
-                options={
-                    "mode": "hard",
-                    "wait_ticks": self.env_wait_ticks,
-                }
-            )
+            self.env.reset(mode='hard',
+                refresh_entities=['resources','simple-entitiy'],
+                wait_ticks=0)
             self.resume = True
-        self.last_events = None
-
+        self.last_events = self.env.step(refresh_entities=['resources','simple-entitiy'])
+        print(self.last_events)
         while True:
             if self.recorder.iteration > self.max_iterations:
                 print("Iteration limit reached")
@@ -379,22 +372,22 @@ class Foyager:
             print(
                 f"\033[35mStarting task {task} for at most {self.action_agent_task_max_retries} times\033[0m"
             )
-            try:
-                messages, reward, done, info = self.rollout(
+
+            messages, reward, done, info = self.rollout(
                     task=task,
                     context=context,
                     reset_env=reset_env,
                 )
-            except Exception as e:
-                time.sleep(3)  # wait for mineflayer to exit
-                info = {
-                    "success": False,
-                }
-                # reset inventory here
-                self.last_events = self.env.reset()
-                # use red color background to print the error
-                print("Your last round rollout terminated due to error:")
-                print(f"\033[41m{e}\033[0m")
+            # except Exception as e:
+            #     time.sleep(3)  # wait for mineflayer to exit
+            #     info = {
+            #         "success": False,
+            #     }
+            #     # reset inventory here
+            #     self.last_events = self.env.reset()
+            #     # use red color background to print the error
+            #     print("Your last round rollout terminated due to error:")
+            #     print(f"\033[41m{e}\033[0m")
             if (
                 task == "Place and deposit useless items into a chest"
                 or task.startswith("Deposit useless items into the chest at")
