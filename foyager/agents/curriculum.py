@@ -222,8 +222,8 @@ class CurriculumAgent:
 
     def propose_next_task(self, *, events, max_retries=5):
         if self.progress == 0 and self.mode == "auto":
-            task = "Mine coal"
-            context = "You will need coal to smelt to smelt any ore for more drills or furnaces."
+            task = "Hand Mine coal"
+            context = "You just spawned in with one bunner furnace. You will need to use this one and hand mine resources until you can make more."
             return task, context
 
         messages = [

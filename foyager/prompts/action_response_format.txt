@@ -9,7 +9,7 @@ lua Code:
 // helper functions (only if needed, try to avoid them)
 ...
 // main function after the helper functions
-local function craft(x, y)
+local function move(x, y)
 
 end
 
