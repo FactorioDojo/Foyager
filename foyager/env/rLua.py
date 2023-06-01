@@ -72,6 +72,9 @@ def generate_name():
     return f"event_{uuid.uuid4().hex}"
     
 # TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
+# TODO: Async functions can not be in a loop?
+# TODO: No recursion
+# TODO: Throw compiler errors
 def compile_to_rlua(source_lua):
 
     # If there is no await keyword in this function, we do not need to compile it to rLua
