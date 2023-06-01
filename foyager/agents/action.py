@@ -136,29 +136,7 @@ class ActionAgent:
     ):
         chat_messages = []
         error_messages = []
-        # FIXME: damage_messages is not used
-        damage_messages = []
-        assert events[-1][0] == "observe", "Last event must be observe"
-        for i, (event_type, event) in enumerate(events):
-            if event_type == "onChat":
-                chat_messages.append(event["onChat"])
-            elif event_type == "onError":
-                error_messages.append(event["onError"])
-            elif event_type == "onDamage":
-                damage_messages.append(event["onDamage"])
-            elif event_type == "observe":
-                biome = event["status"]["biome"]
-                time_of_day = event["status"]["timeOfDay"]
-                voxels = event["voxels"]
-                entities = event["status"]["entities"]
-                health = event["status"]["health"]
-                hunger = event["status"]["food"]
-                position = event["status"]["position"]
-                equipment = event["status"]["equipment"]
-                inventory_used = event["status"]["inventoryUsed"]
-                inventory = event["inventory"]
-                assert i == len(events) - 1, "observe must be the last event"
-
+        
         observation = ""
 
         if code:
@@ -180,41 +158,15 @@ class ActionAgent:
             else:
                 observation += f"Chat log: None\n\n"
 
-        observation += f"Biome: {biome}\n\n"
+        # observation += f"Health: {health:.1f}/20\n\n"
 
-        observation += f"Time: {time_of_day}\n\n"
+        observation += f"Entity observations around the player:\n"
 
-        if voxels:
-            observation += f"Nearby blocks: {', '.join(voxels)}\n\n"
-        else:
-            observation += f"Nearby blocks: None\n\n"
+        for event in events:
+            for key,value in event.items():
+                observation += f"{key} - {value}\n"
 
-        if entities:
-            nearby_entities = [
-                k for k, v in sorted(entities.items(), key=lambda x: x[1])
-            ]
-            observation += f"Nearby entities (nearest to farthest): {', '.join(nearby_entities)}\n\n"
-        else:
-            observation += f"Nearby entities (nearest to farthest): None\n\n"
-
-        observation += f"Health: {health:.1f}/20\n\n"
-
-        observation += f"Hunger: {hunger:.1f}/20\n\n"
-
-        observation += f"Position: x={position['x']:.1f}, y={position['y']:.1f}, z={position['z']:.1f}\n\n"
-
-        observation += f"Equipment: {equipment}\n\n"
-
-        if inventory:
-            observation += f"Inventory ({inventory_used}/36): {inventory}\n\n"
-        else:
-            observation += f"Inventory ({inventory_used}/36): Empty\n\n"
-
-        if not (
-            task == "Place and deposit useless items into a chest"
-            or task.startswith("Deposit useless items into the chest at")
-        ):
-            observation += self.render_chest_observation()
+        # observation += f"Position: x={position['x']:.1f}, y={position['y']:.1f}\n\n"
 
         observation += f"Task: {task}\n\n"
 
