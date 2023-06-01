@@ -25,12 +25,12 @@ class Foyager:
         env_request_timeout: int = 600,
         max_iterations: int = 160,
         reset_placed_if_failed: bool = False,
-        action_agent_model_name: str = "gpt-4",
+        action_agent_model_name: str = "gpt-3.5-turbo",
         action_agent_temperature: int = 0,
         action_agent_task_max_retries: int = 4,
         action_agent_show_chat_log: bool = True,
         action_agent_show_execution_error: bool = True,
-        curriculum_agent_model_name: str = "gpt-4",
+        curriculum_agent_model_name: str = "gpt-3.5-turbo",
         curriculum_agent_temperature: int = 0,
         curriculum_agent_qa_model_name: str = "gpt-3.5-turbo",
         curriculum_agent_qa_temperature: int = 0,
@@ -38,7 +38,7 @@ class Foyager:
         curriculum_agent_core_inventory_items: str = r".*_log|.*_planks|stick|crafting_table|furnace"
         r"|cobblestone|dirt|coal|.*_pickaxe|.*_sword|.*_axe",
         curriculum_agent_mode: str = "auto",
-        critic_agent_model_name: str = "gpt-4",
+        critic_agent_model_name: str = "gpt-3.5-turbo",
         critic_agent_temperature: int = 0,
         critic_agent_mode: str = "auto",
         skill_manager_model_name: str = "gpt-3.5-turbo",
@@ -360,7 +360,6 @@ class Foyager:
                 wait_ticks=0)
             self.resume = True
         self.last_events = self.env.step(refresh_entities=['resources','simple-entitiy'])
-        print(self.last_events)
         while True:
             if self.recorder.iteration > self.max_iterations:
                 print("Iteration limit reached")
