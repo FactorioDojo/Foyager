@@ -15,5 +15,6 @@ def load_control_primitives_context(primitive_names=None):
         U.load_text(f"{package_path}/control_primitives_context/{primitive_name}.lua")
         for primitive_name in primitive_names
     ]
-    print(primitives)
+    print (primitives)
     return primitives
+

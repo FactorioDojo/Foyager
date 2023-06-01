@@ -226,22 +226,6 @@ class CurriculumAgent:
             context = "You just spawned in with one bunner furnace. You will need to use this one and hand mine resources until you can make more."
             return task, context
 
-        # hard code task when inventory is almost full
-        if events[-1][1]["status"]["inventoryUsed"] >= 33:
-            task = "Place and deposit useless items into a chest"
-            context = (
-                f"Your inventory have {events[-1][1]['status']['inventoryUsed']} occupied slots before depositing. "
-                "Place the chest in your inventory to the ground and choose some useless items to deposit. "
-                "After depositing, your inventory should only have 20 occupied slots. "
-                "You should deposit useless items such as andesite, dirt, cobblestone, etc. "
-                "Also, you can deposit low-level tools. "
-                "For example, if you have a stone pickaxe, you can deposit a wooden pickaxe. "
-                "Make sure the list of useless items are in your inventory "
-                "(do not list items already in the chest), "
-                "You can use bot.inventoryUsed() to check how many inventory slots are used."
-            )
-            return task, context
-
         messages = [
             self.render_system_message(),
             self.render_human_message(

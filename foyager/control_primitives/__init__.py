@@ -15,5 +15,4 @@ def load_control_primitives(primitive_names=None):
         U.load_text(f"{package_path}/control_primitives/{primitive_name}lua")
         for primitive_name in primitive_names
     ]
-    print(primitives)
     return primitives
