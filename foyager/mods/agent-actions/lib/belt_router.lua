@@ -20,7 +20,7 @@ local SelectionQueue = require("selection_queue")
 --- @type TransportLineConnector
 local TransportLineConnector = require("transport_line_connector")
 --- @type boolean
-local releaseMode = require("release")
+local releaseMode = false
 
 --- @type table<string, boolean> simple table for easy toggling debugging groups
 local loggingCategories = {
