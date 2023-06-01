@@ -1,7 +1,7 @@
 import re
 import uuid
 
-control_primitive_script = \
+control_primitive_script_1 = \
 '''
 function mine_resource(ore_type, quantity)
     -- Check if arguments are valid
@@ -43,6 +43,33 @@ end
 return mine_resource
 '''
 
+control_primitive_script_2 = \
+'''
+function mine_resource(ore_type, quantity)
+    local player = game.players[1]
+
+    -- Move to ore position
+    await move(resource_position)
+
+    -- Mining loop
+    await mine(resouce_position, quantity)
+    
+    -- Mining loop
+    await mine(resouce_position, quantity)
+    
+    -- Mining loop
+    await mine(resouce_position, quantity)
+    
+    -- Mining loop
+    await mine(resouce_position, quantity)
+
+    -- If the mining process was successful, return true
+    return true
+end
+
+return mine_resource
+'''
+
 
 event_function_open_str = \
 '''
@@ -59,14 +86,14 @@ EVENT_SUCCESS = 'event_success'
 EVENT_FAIL = 'event_fail'
 
 # Unique event names generator
-def generate_event_name():
+def generate_name():
     return f"event_{uuid.uuid4().hex}"
     
 
 def compile_to_rlua(source_lua):
 
-    # Global table of timelines
-    timelines = {}
+    # Table of event ptrs
+    event_ptrs = {}
 
 
     # Find the last occurrence of "end"
@@ -82,9 +109,22 @@ def compile_to_rlua(source_lua):
     # List to store the new code
     output = []
     
+    # Extract main function name
+    main_function_name = re.search(r'(function)\s([a-zA-Z_][a-zA-Z_0-9]*)', source_lua)   
+    
+    if not main_function_name:
+        print("Failed to find function name")
+        return
+    
+    main_function_name = main_function_name.group(2)
+    
+    
+    # Set flag for special case end instead of end) for the first function
     first_function = True
     
-    current_event = generate_event_name()
+    # Generate the first ptr
+    current_event = generate_name()
+    
     for line in lines:
         print('====================')
         print('line ', line)
@@ -111,15 +151,18 @@ def compile_to_rlua(source_lua):
             
             # Close current event and start a new one
             if first_function:
-                output.append(f"end  -- end of {current_event}")
+                output.append(f"end  -- end of " + main_function_name)
             else:
                 output.append(f"end)  -- end of {current_event}")
                 
             # Generate new event name
-            next_event = generate_event_name()
+            next_event = generate_name()
 
             # Update timelines
-            timelines[current_event] = next_event
+            if first_function:
+                event_ptrs[main_function_name] = next_event
+            else:
+                event_ptrs[current_event] = next_event
 
             # Start a new event
             output.append(event_function_open_str.format(event_id=next_event))
@@ -149,17 +192,33 @@ def compile_to_rlua(source_lua):
     # Close the last event
     output.append(f"end)  -- end of {current_event}")
 
-    # Add the global table to the output
-    function_table_ptr_str = ''
-    for node in timelines:
-        function_table_ptr_str += 'global.function_table_ptr[{node}] = {connection}'.format(
-            node = node, 
-            connection = timelines[node]
+    # Add the global ptr table to the output
+    event_ptrs_str = ''
+    for ptr in event_ptrs:
+        event_ptrs_str += 'global.event_ptrs[\'{ptr}\'] = {value}'.format(
+            ptr = ptr,
+            value = event_ptrs[ptr] 
         )+'\n'
-         
-    output.insert(0, function_table_ptr_str)
+        
+        
+    # Add the global event table to the output
+    events_str = ''
+    for ptr in event_ptrs:
+        events_str += 'global.events[\'{ptr}\'] = generate_event_name()'.format(
+            ptr = ptr,
+        )+'\n'
+        events_str += 'global.events[\'{ptr}\'] = generate_event_name()'.format(
+            ptr = event_ptrs[ptr],
+        )+'\n'
 
+
+         
+    output.insert(0, event_ptrs_str)
+    output.insert(0, events_str)
+    
+    output.append('\n return ' + main_function_name)
+    
     return "\n".join(output)
 
-source_rlua = compile_to_rlua(control_primitive_script)
+source_rlua = compile_to_rlua(control_primitive_script_1)
 print(source_rlua)
