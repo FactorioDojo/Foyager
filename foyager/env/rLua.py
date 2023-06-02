@@ -51,20 +51,7 @@ function mine_resource(ore_type, quantity)
     -- Move to ore position
     await move(resource_position)
 
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-    
-    -- Mining loop
-    await mine(resouce_position, quantity)
-
-    -- If the mining process was successful, return true
-    return true
+    for _ in
 end
 
 return mine_resource
@@ -77,24 +64,50 @@ script.on_event({event_id}, function(event)
 '''
 
 
-set_global_table_str = \
-'''
-    {timeline}
-'''
-
-EVENT_SUCCESS = 'event_success'
-EVENT_FAIL = 'event_fail'
+EVENT_SUCCESS = 'global.SCRIPT_SUCCESS_EVENT'
+EVENT_FAIL = 'global.SCRIPT_FAILED_EVENT'
 
 # Unique event names generator
 def generate_name():
     return f"event_{uuid.uuid4().hex}"
     
 
+#returns true if valid
+def is_valid(source_lua):
+        #disallowed keywords go here, 
+        disallowed_keywords= ["while", "for", "repeat", "do", "generate_event_name","get_event_handler","get_event_order","set_event_filter","get_event_filter","raise_event","raise_hover_events"]
+        #check for keywords, only is invalid if keyword appears if not bordered on at least one side by non whitespace character (excluding of course a trailing "(")
+        for keyword in disallowed_keywords:
+            pattern = fr"(?<!\S){re.escape(keyword)}(?!\S)|{re.escape(keyword)}\s*\("
+            if(re.search(pattern, source_lua) is not None):
+                #
+                #log somehow
+                #
+                return False
+        #check for events
+        pattern = r"script\.on_.*"
+        if(re.search(pattern, source_lua) is not None):
+            #
+            #log somehow
+            #
+            return False
+        
+        return True
+
+# TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
+# TODO: Async functions can not be in a loop?
+# TODO: No recursion
 def compile_to_rlua(source_lua):
+    #checks for compiler errors
+    
+    # If there is no await keyword in this function, we do not need to compile it to rLua
+    await_kwd = re.search(r'await\s+([a-zA-Z_][a-zA-Z_0-9]*)', source_lua)
+    if not await_kwd:
+        return source_lua
+
 
     # Table of event ptrs
     event_ptrs = {}
-
 
     # Find the last occurrence of "end"
     last_end_index = source_lua.rfind("end")
@@ -171,14 +184,15 @@ def compile_to_rlua(source_lua):
             
             if first_function: first_function = False
         elif return_kwd:
-            true_kwd = re.search(r'return\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
-            false_kwd = re.search(r'return\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
-            function_name_kwd = re.search(r'dickface\s+([a-zA-Z_][a-zA-Z_0-9]*)', line)
+            true_kwd = re.search(r'true', line)
+            false_kwd = re.search(r'false', line)
+            function_name_pattern = main_function_name+'\s+([a-zA-Z_][a-zA-Z_0-9]*)'
+            function_name_kwd = re.search(function_name_pattern, line)
             
             if true_kwd:
-                output.append(re.sub(r'(\s*)return(\s*)true', r'\1raise_event({})\2'.format(EVENT_SUCCESS), line))
+                output.append(re.sub(r'(\s*)return(\s*)true', r'\1raise_event({status})\2'.format(status=EVENT_SUCCESS), line))
             elif false_kwd:
-                output.append(re.sub(r'(\s*)return(\s*)false', r'\1raise_event({})\2'.format(EVENT_FAIL), line))
+                output.append(re.sub(r'(\s*)return(\s*)false', r'\1raise_event({status})\2'.format(status=EVENT_FAIL), line))
             elif function_name_kwd:
                 # Remove line
                 pass

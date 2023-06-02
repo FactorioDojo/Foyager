@@ -1,5 +1,112 @@
 require("lib/log_utils")
 
+
+
+-- Determines which direction the character should go.
+function get_direction(start_position, end_position)
+    local angle = math.atan2(end_position.y - start_position.y, start_position.x - end_position.x)
+
+    -- Given a circle representing the angles, it is divided into eight octants representing the cardinal directions.
+    local octant = (angle + math.pi) / (2 * math.pi) * 8 + 0.5
+
+    if octant < 1 then
+        return defines.direction.east
+    elseif octant < 2 then
+        return defines.direction.northeast
+    elseif octant < 3 then
+        return defines.direction.north
+    elseif octant < 4 then
+        return defines.direction.northwest
+    elseif octant < 5 then
+        return defines.direction.west
+    elseif octant < 6 then
+        return defines.direction.southwest
+    elseif octant < 7 then
+        return defines.direction.south
+    else
+        return defines.direction.southeast
+    end
+end
+
+function positions_approximately_equal(a, b)
+    return math.abs(a.x - b.x) < 0.25 and math.abs(a.y - b.y) < 0.25
+end
+
+-- ASYNC
+-- Requests a path when the map is clicked.
+function move(x,y)
+    local surface = game.get_surface("nauvis")
+    local character = game.get_player(1).character
+    local position = {x = x, y = y}
+    local collision_mask = {
+      "water-tile",
+      "object-layer",
+      "player-layer",
+      "train-layer",
+      "consider-tile-transitions",
+  }
+
+    --
+    t = character.bounding_box
+    
+    --probable reason for pathing over water is collision masks.
+    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+
+    pos = character.position
+    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
+    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
+    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
+    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+
+    global.path_received = false
+
+
+    surface.request_path{
+        bounding_box = bbox2,
+        collision_mask = {"water-tile"},
+        start = character.position,
+        goal = position,
+        force = "player",
+        radius = 3.0,
+        path_resolution_modifier = 0
+    }
+
+    subscribe_on_tick_event(on_tick_move_event)
+end
+
+-- ASYNC
+-- Handcraft one or more of a recipe
+local function craft(count, recipe)
+    clog("Info: called craft() function")
+    if count <= 0 then
+        clog("Error: craft count must be >= 0")
+        return false
+    end
+
+	amt = game.players[1].begin_crafting{recipe = recipe, count = count}
+    if amt ~= count then
+        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+        return true
+    end
+
+    clog("Info: successfully crafted " .. cout .. " item")
+	return true
+end
+
+-- ASYNC
+-- Mine tile
+local function mine_tile(position, count)
+	-- TODO: Implement 
+end
+
+
+-- ASYNC
+-- Mine entity
+local function mine_entity(position):
+	-- TODOD: Implement
+end
+
+
 -- Create an entity on the surface. In most cases this is building a structure/item/entity
 -- It checks to see if a fast-replace works first.
 -- Returns false on failure to prevent advancing state until within reach and/or item is in the inventory
@@ -82,95 +189,6 @@ local function build(p, position, item, direction)
 	end
 
     clog("Info: successfully built item at position")
-	return true
-end
-
--- Determines which direction the character should go.
-function get_direction(start_position, end_position)
-    local angle = math.atan2(end_position.y - start_position.y, start_position.x - end_position.x)
-
-    -- Given a circle representing the angles, it is divided into eight octants representing the cardinal directions.
-    local octant = (angle + math.pi) / (2 * math.pi) * 8 + 0.5
-
-    if octant < 1 then
-        return defines.direction.east
-    elseif octant < 2 then
-        return defines.direction.northeast
-    elseif octant < 3 then
-        return defines.direction.north
-    elseif octant < 4 then
-        return defines.direction.northwest
-    elseif octant < 5 then
-        return defines.direction.west
-    elseif octant < 6 then
-        return defines.direction.southwest
-    elseif octant < 7 then
-        return defines.direction.south
-    else
-        return defines.direction.southeast
-    end
-end
-
-function positions_approximately_equal(a, b)
-    return math.abs(a.x - b.x) < 0.25 and math.abs(a.y - b.y) < 0.25
-end
-
--- Requests a path when the map is clicked.
-function move(x,y)
-    local surface = game.get_surface("nauvis")
-    local character = game.get_player(1).character
-    local position = {x = x, y = y}
-    local collision_mask = {
-      "water-tile",
-      "object-layer",
-      "player-layer",
-      "train-layer",
-      "consider-tile-transitions",
-  }
-
-    --
-    t = character.bounding_box
-    
-    --probable reason for pathing over water is collision masks.
-    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
-
-    pos = character.position
-    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
-    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
-    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
-    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
-
-    global.path_received = false
-
-
-    surface.request_path{
-        bounding_box = bbox2,
-        collision_mask = {"water-tile"},
-        start = character.position,
-        goal = position,
-        force = "player",
-        radius = 3.0,
-        path_resolution_modifier = 0
-    }
-
-    subscribe_on_tick_event(on_tick_move_event)
-end
-
--- Handcraft one or more of a recipe
-local function craft(count, recipe)
-    clog("Info: called craft() function")
-    if count <= 0 then
-        clog("Error: craft count must be >= 0")
-        return false
-    end
-
-	amt = game.players[1].begin_crafting{recipe = recipe, count = count}
-    if amt ~= count then
-        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
-        return true
-    end
-
-    clog("Info: successfully crafted " .. cout .. " item")
 	return true
 end
 

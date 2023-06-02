@@ -5,24 +5,40 @@ writeouts = require("writeouts")
 actions = require("actions")
 
 
+-- 
+
 -- Tables of subscriber functions
 on_tick_subscribers = {}
 
--- Global variables for the move function
-global.path_received = false 
-global.move_path = {}
-global.move_path_index = 1
-global.character_is_moving = false
+script.on_init(function()
+	-- Global variables for the move function
+	global.path_received = false 
+	global.move_path = {}
+	global.move_path_index = 1
+	global.character_is_moving = false
 
+	-- Events and event ptrs
+	global.event_ptrs = {}
+	global.events = {}
+	global.current_event_ptr = nil
 
--- local destination = {x = 0, y = 0}
--- local state = 1
--- local idle = 0
--- local pick = 0
--- local dropping = 0
---Uncomment this for the better mining handling fix
---local mining_done = 0
+	-- Create a custom event for successfully finished tasks 
+    -- Not actually used for anything
+	global.SCRIPT_SUCCESS_EVENT = generate_event_name() 
+	
+    -- Create a custom event for tasks that failed
+	global.SCRIPT_FAILED_EVENT = generate_event_name()
+	
+    -- Create a custom event for executing a script 
+    -- Starts the task process 
+	global.SCRIPT_EXECUTED_EVENT = generate_event_name()
+    
+    -- Create a custom event for finishing an async function
+    -- Raised upon any async-type function completing execution.
+    -- This includes runtime scripts
+    global.ASYNC_EXEC_COMPLETE = generate_event_name()
 
+end)
 
 -- Event subscribers
 function subscribe_on_tick_event(func)
@@ -52,6 +68,7 @@ on_tick_move_event = function(event)
             global.character_is_moving = false
             global.move_path_index = 1
 			unsubscribe_on_tick_event(on_tick_move_event)
+            raise_event(global.ASYNC_EXEC_COMPLETE)
         else
             -- move the character for one tick
             game.get_player(1).walking_state = {
@@ -70,8 +87,29 @@ script.on_event(defines.events.on_tick, function(event)
     end
 end)
 
+-- Script execution. Prime the event ptr.
+script.on_event(global.SCRIPT_EXECUTED_EVENT, function(event, function_name)
+    -- Set event_ptr
+    global.current_event_ptr = function_name
+end)
 
+-- Async execution
+script.on_event(global.ASYNC_EXEC_COMPLETE, fuction(event)
+    -- Find the next event_ptr
+    local next_event_ptr = global.event_ptr[global.current_event_ptr]
+    -- Does it exist?
+    if next_event_ptr ~= nil:
+        -- Locate the event
+        local next_event = global.events[next_event_ptr]
+        -- Set the current event ptr
+        global.current_event_ptr = next_event_ptr
+        -- Fire event
+        raise_event(next_event)
+    else:
+        global.current_event_ptr = nil
+end)
 
+-- For moving only
 -- Initializes the movement process when the path is received.
 script.on_event(defines.events.on_script_path_request_finished, function (event)
     if event.path then
