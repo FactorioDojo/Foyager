@@ -59,8 +59,7 @@ Code:
     3) Use these functions and simple logic to complete the tasks given and return when they are complete
     5) Anything defined outside a function will be ignored, define all your variables inside your functions.
     6) Do not write infinite loops or recursive functions.
-    
-    7) Do not use script.on_event or script.on_nth_tick to register event listeners. You definitely do not need them. 
+    7) Do not use script.on_event or script.on_nth_tick to register event listeners.  You definitely do not need them. 
     8) Call player.print("message") to show the intermediate progress.
     9) Name your function in a meaningful way (can infer the task from the name).
 
