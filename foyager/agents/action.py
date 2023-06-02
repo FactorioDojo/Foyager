@@ -68,8 +68,8 @@ class ActionAgent:
         # FIXME: Hardcoded control_primitives
         base_skills = [
             "move",
-            "mine_resource",
-            "route_belt",
+            "craft",
+            "build",
         ]
  
         programs = "\n\n".join(load_control_primitives_context(base_skills) + skills)
@@ -81,6 +81,7 @@ class ActionAgent:
             programs=programs, response_format=response_format
         )
         assert isinstance(system_message, SystemMessage)
+        print(system_message)
         return system_message
 
     def process_ai_message(self, message):
@@ -162,9 +163,11 @@ class ActionAgent:
 
         observation += f"Entity observations around the player:\n"
 
+        #events are in the format
+        #[{name:data}]
         for event in events:
-            for key,value in event.items():
-                observation += f"{key} - {value}\n"
+            for name,data in event.items():
+                observation += f"{name} - {data}\n"
 
         # observation += f"Position: x={position['x']:.1f}, y={position['y']:.1f}\n\n"
 

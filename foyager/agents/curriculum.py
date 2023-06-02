@@ -222,24 +222,8 @@ class CurriculumAgent:
 
     def propose_next_task(self, *, events, max_retries=5):
         if self.progress == 0 and self.mode == "auto":
-            task = "Mine coal"
-            context = "You will need coal to smelt run any drills or furnaces."
-            return task, context
-
-        # hard code task when inventory is almost full
-        if events[-1][1]["status"]["inventoryUsed"] >= 33:
-            task = "Place and deposit useless items into a chest"
-            context = (
-                f"Your inventory have {events[-1][1]['status']['inventoryUsed']} occupied slots before depositing. "
-                "Place the chest in your inventory to the ground and choose some useless items to deposit. "
-                "After depositing, your inventory should only have 20 occupied slots. "
-                "You should deposit useless items such as andesite, dirt, cobblestone, etc. "
-                "Also, you can deposit low-level tools. "
-                "For example, if you have a stone pickaxe, you can deposit a wooden pickaxe. "
-                "Make sure the list of useless items are in your inventory "
-                "(do not list items already in the chest), "
-                "You can use bot.inventoryUsed() to check how many inventory slots are used."
-            )
+            task = "Start handing mining resources to begin a factory"
+            context = "You just spawned into a new world. Start building out your resource production for a new factory"
             return task, context
 
         messages = [

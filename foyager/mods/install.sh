@@ -8,7 +8,7 @@ mod_name_1="agent-actions"
 zip_file_1="${mod_name_1}_${version}.zip"
 temp_folder_1="${mod_name_1}_${version}"
 
-copy_flag=false
+copy_flag=true
 custom_destination_folder=""
 
 # Function to check if a directory exists
@@ -37,7 +37,7 @@ done
 # If the copy flag is set, check the custom destination folder
 if $copy_flag; then
     if [ -z "$custom_destination_folder" ]; then
-        custom_destination_folder="$HOME/opt/factorio/mods"
+        custom_destination_folder="/opt/factorio/mods"
     fi
 
     check_directory_exists "$custom_destination_folder"
