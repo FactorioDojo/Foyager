@@ -141,7 +141,7 @@ class Foyager:
             ckpt_dir=ckpt_dir,
             resume=resume,
         )
-        self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir, resume=resume)
+        self.recorder = U.EventRecorder(ckpt_dir=ckpt_dir)
         self.resume = resume
 
         # init variables for rollout
@@ -151,10 +151,6 @@ class Foyager:
         self.messages = None
         self.conversations = []
         self.last_events = None
-
-    def ping(self):
-        return self.env.ping()
-
 
     """
         The reset method resets the agent's state and the game environment to prepare for a new task. 
@@ -176,14 +172,14 @@ class Foyager:
         if reset_env:
             self.env.reset(mode='soft',
                            wait_ticks= self.env_wait_ticks,
-                           refresh_entities=['resources','simple-entitiy']
+                           refresh_entities=['resource','simple-entitiy']
                            )
 
         
         # events = self.env.step()
         skills = self.skill_manager.retrieve_skills(query=self.context)
         #first observation is only does resources and simple-entities
-        events = self.env.step(refresh_entities=['resources','simple-entitiy'])
+        events = self.env.step(refresh_entities=['resource','simple-entitiy'])
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )

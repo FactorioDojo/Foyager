@@ -24,6 +24,9 @@ class FoyagerEnv():
         self.rcon_port = rcon_port
         self.rcon_password = rcon_password
     def observe(self,entities,client):
+        client.run(f"/c remote.call('writeouts', 'writeout_inventory')")
+        client.run(f"/c remote.call('writeouts', 'writeout_recipes')")
+
         for entity in entities:
             client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}')")
                 
@@ -56,20 +59,18 @@ class FoyagerEnv():
 
             # events is the return value of the command and the state of any entities requested refreshed after the execution        
             events = []
-            # TODO fix this up. It was breaking with 
-            # command_res = self.get_response(load_message_id, execute_message_id)
-            # events.append(json.load(command_res)            
+            events.append({"inventory": U.mod_utils.parse_inventory()})
+            events.append({"recipes": U.mod_utils.parse_recipes()})
             for entity in refresh_entities:
-                if entity == 'resources':
+                if entity == 'resource':
                     deposits = U.mod_utils.resource_clustering()
-                    event = deposits
+                    event = {"resource": deposits}
 
                 else:
-                    event = U.mod_utils.process_filtered_entity(entity)
+                    event = {entity: U.mod_utils.process_filtered_entity(entity)}
     
                 events.append(event)
-
-        return events
+            return events
     
 
 
@@ -127,14 +128,13 @@ class FoyagerEnv():
     def reset(self,mode,wait_ticks,refresh_entities):
         client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
         with client as c:
+            self.observe(refresh_entities,client)
             if mode == "soft":
                 # reload mods to wipe game state
                 c.run(f"/c game.reload_mods()")
 
             # hard reset, re observe state, reload and wait
             elif mode == "hard":
-                self.observe(refresh_entities,client)
-                c.run(f"/c game.reload_mods()")
-                        
+                c.run(f"/c game.reload_mods()") 
                 if wait_ticks != 0:
                     time.sleep(wait_ticks)

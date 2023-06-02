@@ -1,6 +1,6 @@
 
 BASE = "/opt/factorio/script-output/"
-RESOURCES = "/opt/factorio/script-output/resources_data.json"
+RESOURCES = "/opt/factorio/script-output/resource_data.json"
 
 
 from sklearn.cluster import MeanShift
@@ -42,9 +42,10 @@ def resource_clustering():
     try:
         with open(RESOURCES) as f:
             data =  list(json.load(f))
+            print(f"RESOURCES:{data}")
             resource_type = defaultdict(list)
             for entity in data:
-                resource_type[entity['resource_type']].append(entity['position'])
+                resource_type[entity['entity_type']].append(entity['position'])
             
             # Calculate bounding box for each entity type
             result = {}
@@ -75,6 +76,38 @@ def resource_clustering():
             return format_resource_json(result)
     except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
         print("Failed to read Writeouts from game")
+
+
+def parse_recipes():
+    try:
+        with open(BASE+'/recipes.json') as f:
+            data =  list(json.load(f))
+            # Construct a new dictionary
+            recipes = {}
+            for item in data:
+                recipe_name = item['recipe_name']
+                ingredients = {ing['ingredient_name']: ing['ingredient_amount'] for ing in item['ingredients']}
+                recipes[recipe_name] = ingredients
+
+            return(recipes)
+    except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
+        print("Failed to read recipe writeout from game")    
+
+def parse_inventory():
+    try:
+        with open(BASE+'/inventory_data.json') as f:
+            data =  list(json.load(f))
+
+            # Construct a new dictionary
+            items = {}
+            for item in data:
+                item_name = item['item_name']
+                item_count = item['item_count']
+                items[item_name] = item_count
+
+            return(items)
+    except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
+        print("Failed to read inventory writeout from game")  
 
     
 def process_simple_entity():

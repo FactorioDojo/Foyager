@@ -1,7 +1,9 @@
 -- This function writes out the player's available recipes to a file
 function writeout_recipes()
     -- Fetch the player's force (which tracks their available technologies and recipes)
-    local player_force = game.player.force
+    local player_id = 1  -- Specify the ID of the player whose position you want to get
+    local player = game.players[player_id]
+    local player_force = player.force
 
     -- Create a table to store the recipe data
     local recipe_data = {}
@@ -36,13 +38,15 @@ function writeout_recipes()
     game.write_file(filename, json_data, false)
 
     -- Notify the player that the recipe data has been written
-    game.player.print("Available recipe data has been written to " .. filename)
+    player.print("Available recipe data has been written to " .. filename)
 end
 
 
 function WriteOutInventory()
+    local player_id = 1  -- Specify the ID of the player whose position you want to get
+    local player = game.players[player_id]
     -- Get the player's main inventory
-    local player_inventory = game.player.get_main_inventory()
+    local player_inventory = player.get_main_inventory()
 
     -- Create a table to store the inventory data
     local inventory_data = {}
@@ -60,7 +64,7 @@ function WriteOutInventory()
     game.write_file(filename, json_data, false)
 
     -- Notify the player that the inventory data has been written
-    game.player.print("Inventory data has been written to " .. filename)
+    player.print("Inventory data has been written to " .. filename)
 end
 
 

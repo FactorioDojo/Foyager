@@ -6,18 +6,14 @@ Reminder Factorio does not have pickaxes
 You have these base functions you can call at any time. USE THESE AS MUCH AS POSSIBLE,
 
 build(p, position, item, direction) - Create an entity on the surface. In most cases this is building a structure/item/entity. It checks to see if a fast-replace works first. Returns false on failure.
-get_direction(start_position, end_position) - Determines which direction the character should go.
-positions_approximately_equal(a, b) - Checks if two positions are approximately equal.
 move(x,y) - Requests a path when the map is clicked.
 craft(count, recipe) - Handcraft one or more of a recipe. Returns false on failure.
 filter(p, position, filter, slot) - Adjust the filter of a filter inserter. Returns false on failure.
 launch(p, position) - Manually launch the rocket. Returns false on failure.
 limit(p, position, limit, slot) - Set the inventory slot space on chests. Returns false on failure.
-priority(p, position, input, output, filter) - Set the input/output/filter settings for a splitter. Returns false on failure.
 put(position, item, amount, slot) - Place an item from the character's inventory into an entity's inventory. Returns false on failure.
 recipe(p, position, recipe) - Set the recipe of an assembling machine or refinery. Returns false on failure.
 rotate(p, position, direction) - Rotate an entity one quarter turn. Returns false on failure.
-speed(speed) - Set the gameplay speed. 1 is standard speed.
 take(p, position, item, amount, slot)- Take an item from the entity's inventory into the character's inventory. Returns false on failure.
 tech(p, research) - Set the current research.
 transfer(p, position, numslots, slot) - Bulk move items from the character's inventory into the entity's inventory. Returns false on failure.
@@ -58,7 +54,7 @@ Code:
         - move(x,y), build(x,y), craft(...) , take(p, position, item, amount, slot)
     3) Use these functions and simple logic to complete the tasks given and return when they are complete
     5) Anything defined outside a function will be ignored, define all your variables inside your functions.
-    6) Do not write infinite loops or recursive functions.
+    6) Do not write ANY loops or recursive functions.
     7) Do not use script.on_event or script.on_nth_tick to register event listeners.  You definitely do not need them. 
     8) Call player.print("message") to show the intermediate progress.
     9) Name your function in a meaningful way (can infer the task from the name).
