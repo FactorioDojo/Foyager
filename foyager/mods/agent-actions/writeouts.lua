@@ -115,7 +115,7 @@ function writeout_filtered_entities(entity_type)
 	   game.write_file(filename, json_data, false)
    
 	   -- Notify the player that the inventory data has been written
-	   game.player.print("Inventory data has been written to " .. filename)
+	   game.players[1].print("Inventory data has been written to " .. filename)
 end
 
 -- Define a remote interface to expose the functions
