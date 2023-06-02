@@ -40,27 +40,7 @@ end
 
 
 -- Moves the character.
-on_tick_move_event = function(event)
-    local character = game.get_player(1).character
-    if global.character_is_moving and global.move_path ~= nil then
-        if positions_approximately_equal(character.position, global.move_path[global.move_path_index].position) then
-            -- waypoint reached
-            global.move_path_index = global.move_path_index + 1  -- select the next waypoint
-        end
 
-        if global.move_path_index == #(global.move_path) then
-            global.character_is_moving = false
-            global.move_path_index = 1
-			unsubscribe_on_tick_event(on_tick_move_event)
-        else
-            -- move the character for one tick
-            game.get_player(1).walking_state = {
-                walking = true,
-                direction = get_direction(character.position, global.move_path[global.move_path_index].position)
-            }
-        end
-    end
-end
 
 
 -- Main per-tick event handler
@@ -72,21 +52,7 @@ end)
 
 
 
--- Initializes the movement process when the path is received.
-script.on_event(defines.events.on_script_path_request_finished, function (event)
-    if event.path then
-		global.path_received = true
-        global.character_is_moving = true
-        global.move_path = event.path
-        global.move_path_index = 1
 
-		-- Debugging
-        game.get_player(1).print(#(global.move_path))
-    else 
-        game.players[1].print("No path found")
-		clog("No path found")
-    end
-end)
 
 -- script.on_event(defines.events.on_player_mined_entity, function(event)
 

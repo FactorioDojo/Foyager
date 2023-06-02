@@ -85,6 +85,63 @@ local function build(p, position, item, direction)
 	return true
 end
 
+
+
+----------------------------------------------------------------
+--	    Move Primitive
+----------------------------------------------------------------
+
+--move(x,y)
+--moves the player to x,y coordinates, returns 
+
+
+function round(num, numDecimalPlaces)
+	local mult = 10^(numDecimalPlaces or 0)
+	return math.floor(num * mult + 0.5) / mult
+  end
+on_tick_move_event = function(event)
+	--detect getting stuck
+	--game.players[1].print(global.previous_position)
+	if global.previous_position ~= nil then
+		game.players[1].print(round(global.previous_position.x,100) == round(game.players[1].character.position.x,100) and round(global.previous_position.y,100) == round(game.players[1].character.position.y, 100))
+		--game.players[1].print(global.previous_position.x .. " " .. global.previous_position.y) 
+		--game.players[1].print("here") 
+		--game.players[1].print(game.players[1].character.position.x .. " " .. game.players[1].character.position.y)
+		if global.previous_position == game.players[1].character.position then
+			game.players[1].print("here") 
+			global.character_is_moving = false
+            global.move_path_index = 1
+			unsubscribe_on_tick_event(on_tick_move_event)
+			clog("Error: player got stuck when attempting path")
+			global.previous_position = nil
+			--raise_event(global.task_failed_event)
+		end
+	end
+	global.previous_position = game.players[1].character.position
+	
+
+    local character = game.get_player(1).character
+    if global.character_is_moving and global.move_path ~= nil then
+        if positions_approximately_equal(character.position, global.move_path[global.move_path_index].position) then
+            -- waypoint reached
+            global.move_path_index = global.move_path_index + 1  -- select the next waypoint
+        end
+
+        if global.move_path_index == #(global.move_path) then
+            global.character_is_moving = false
+            global.move_path_index = 1
+			unsubscribe_on_tick_event(on_tick_move_event)
+			clog("Info: player moved within 3 tiles of location")
+        else
+            -- move the character for one tick
+            game.get_player(1).walking_state = {
+                walking = true,
+                direction = get_direction(character.position, global.move_path[global.move_path_index].position)
+            }
+        end
+    end
+end
+
 -- Determines which direction the character should go.
 function get_direction(start_position, end_position)
     local angle = math.atan2(end_position.y - start_position.y, start_position.x - end_position.x)
@@ -116,7 +173,9 @@ function positions_approximately_equal(a, b)
 end
 
 -- Requests a path when the map is clicked.
-function move(x,y)
+function move(x,y,layer)
+	global.previous_position = nil
+
     local surface = game.get_surface("nauvis")
     local character = game.get_player(1).character
     local position = {x = x, y = y}
@@ -145,7 +204,7 @@ function move(x,y)
 
     surface.request_path{
         bounding_box = bbox2,
-        collision_mask = {"water-tile"},
+        collision_mask = {layer},
         start = character.position,
         goal = position,
         force = "player",
@@ -155,6 +214,27 @@ function move(x,y)
 
     subscribe_on_tick_event(on_tick_move_event)
 end
+
+-- Initializes the movement process when the path is received.
+script.on_event(defines.events.on_script_path_request_finished, function (event)
+    if event.path then
+		global.path_received = true
+        global.character_is_moving = true
+        global.move_path = event.path
+        global.move_path_index = 1
+
+		-- Debugging
+        game.get_player(1).print(#(global.move_path))
+    else 
+        game.players[1].print("No path found")
+		clog("Error: No path found")
+		--raise_event(global.task_failed_event)
+    end
+end)
+
+----------------------------------------------------------------
+--	    End Move Primitive
+----------------------------------------------------------------
 
 -- Handcraft one or more of a recipe
 local function craft(count, recipe)
