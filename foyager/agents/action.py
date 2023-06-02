@@ -163,9 +163,11 @@ class ActionAgent:
 
         observation += f"Entity observations around the player:\n"
 
+        #events are in the format
+        #[{name:data}]
         for event in events:
-            for key,value in event.items():
-                observation += f"{key} - {value}\n"
+            for name,data in event.items():
+                observation += f"{name} - {data}\n"
 
         # observation += f"Position: x={position['x']:.1f}, y={position['y']:.1f}\n\n"
 
