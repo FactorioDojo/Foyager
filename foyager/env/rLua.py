@@ -75,18 +75,28 @@ def generate_name():
 #returns true if valid
 def is_valid(source_lua):
         #disallowed keywords go here, 
-        disallowed_keywords= ["while", "for", "repeat", "do"]
+        disallowed_keywords= ["while", "for", "repeat", "do", "generate_event_name","get_event_handler","get_event_order","set_event_filter","get_event_filter","raise_event","raise_hover_events"]
         #check for keywords, only is invalid if keyword appears if not bordered on at least one side by non whitespace character (excluding of course a trailing "(")
         for keyword in disallowed_keywords:
             pattern = fr"(?<!\S){re.escape(keyword)}(?!\S)|{re.escape(keyword)}\s*\("
             if(re.search(pattern, source_lua) is not None):
+                #
+                #log somehow
+                #
                 return False
+        #check for events
+        pattern = r"script\.on_.*"
+        if(re.search(pattern, source_lua) is not None):
+            #
+            #log somehow
+            #
+            return False
+        
         return True
 
 # TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
 # TODO: Async functions can not be in a loop?
 # TODO: No recursion
-# TODO: Throw compiler errors
 def compile_to_rlua(source_lua):
     #checks for compiler errors
     
