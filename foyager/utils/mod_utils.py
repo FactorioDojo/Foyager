@@ -1,6 +1,6 @@
 
 BASE = "/opt/factorio/script-output/"
-RESOURCES = "/opt/factorio/script-output/resource_data.json"
+RESOURCES = "/opt/factorio/script-output/resources_data.json"
 
 
 from sklearn.cluster import MeanShift
