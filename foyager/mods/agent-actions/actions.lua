@@ -32,49 +32,76 @@ function positions_approximately_equal(a, b)
     return math.abs(a.x - b.x) < 0.25 and math.abs(a.y - b.y) < 0.25
 end
 
--- ASYNC
--- Requests a path when the map is clicked.
-function move(x,y)
-    local surface = game.get_surface("nauvis")
-    local character = game.get_player(1).character
-    local position = {x = x, y = y}
-    local collision_mask = {
-      "water-tile",
-      "object-layer",
-      "player-layer",
-      "train-layer",
-      "consider-tile-transitions",
-  }
 
-    --
-    t = character.bounding_box
-    
-    --probable reason for pathing over water is collision masks.
-    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+function instant_move(position)
 
-    pos = character.position
-    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
-    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
-    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
-    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+	local surface = game.get_surface("nauvis")
+	local player = game.get_player(1)
+	-- Check if the destination is blocked
 
-    global.path_received = false
-
-
-    surface.request_path{
-        bounding_box = bbox2,
-        collision_mask = {"water-tile"},
-        start = character.position,
-        goal = position,
-        force = "player",
-        radius = 3.0,
-        path_resolution_modifier = 0
-    }
-
-    subscribe_on_tick_event(on_tick_move_event)
+	-- Teleport player
+	player.teleport(position, surface, true)
+	clog("Info: Player successfully moved to location")	
 end
 
--- ASYNC
+-- Will perform an instant teleport
+-- (ASYNC later)
+-- Requests a path when the map is clicked.
+function move(position)
+
+	instant_move(position)
+
+	-- ASYNC STUFF FOR LATER
+	--     local surface = game.get_surface("nauvis")
+	--     local character = game.get_player(1).character
+	--     local position = {x = x, y = y}
+	--     local collision_mask = {
+	--       "water-tile",
+	--       "object-layer",
+	--       "player-layer",
+	--       "train-layer",
+	--       "consider-tile-transitions",
+	--   }
+
+	--     --
+	--     t = character.bounding_box
+		
+	--     --probable reason for pathing over water is collision masks.
+	--     --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+
+	--     pos = character.position
+	--     --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
+	--     --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
+	--     local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
+	--     local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+
+	--     global.path_received = false
+
+
+	--     surface.request_path{
+	--         bounding_box = bbox2,
+	--         collision_mask = {"water-tile"},
+	--         start = character.position,
+	--         goal = position,
+	--         force = "player",
+	--         radius = 3.0,
+	--         path_resolution_modifier = 0
+	--     }
+
+	--     subscribe_on_tick_event(on_tick_move_event)
+end
+
+
+function instant_craft(count, recipe)
+	local craftable_count = get_craftable_count(recipe)
+    if craftable_count <= count then
+        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+	end
+
+end
+
+-- Will perform an instant craft
+-- (ASYNC later)
 -- Handcraft one or more of a recipe
 local function craft(count, recipe)
     clog("Info: called craft() function")
@@ -83,28 +110,33 @@ local function craft(count, recipe)
         return false
     end
 
-	amt = game.players[1].begin_crafting{recipe = recipe, count = count}
-    if amt ~= count then
-        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
-        return true
-    end
+	instant_craft(count, recipe)
 
-    clog("Info: successfully crafted " .. cout .. " item")
-	return true
+	-- ASYNC STUFF FOR LATER
+	-- amt = game.players[1].begin_crafting{recipe = recipe, count = count}
+    -- if amt ~= count then
+    --     clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+    --     return true
+    -- end
+
+    -- clog("Info: successfully crafted " .. cout .. " item")
+	-- return true
 end
 
--- ASYNC
+-- /c game.players[1].mine_entity(game.surfaces[1].find_entities_filtered{position = game.players[1].position, radius=10, limit = 1}[1])
+function instant_mine(entity)
+	local player = game.get_player(1)
+	player.mine_entity(entity)
+end
+
+-- Will perform an instant mine
+-- (ASYNC later)
 -- Mine tile
-local function mine_tile(position, count)
-	-- TODO: Implement 
+local function mine(entity)
+	-- Perform checks
+	instant_mine(entity)
 end
 
-
--- ASYNC
--- Mine entity
-local function mine_entity(position):
-	-- TODOD: Implement
-end
 
 
 -- Create an entity on the surface. In most cases this is building a structure/item/entity
