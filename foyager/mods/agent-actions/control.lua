@@ -11,6 +11,10 @@ actions = require("actions")
 -- on_tick_subscribers = {}
 
 script.on_init(function()
+
+    -- Set player, assembler and furance crafting speeds to be instant
+
+
 	-- Global variables for the move function
 	-- global.path_received = false 
 	-- global.move_path = {}
@@ -40,22 +44,11 @@ script.on_init(function()
 
 end)
 
--- Set player, assembler and furance crafting speeds to be instant
 script.on_event(defines.events.on_player_created, function(event)
     local player = game.get_player(1)
-	player.manual_crafting_speed_modifier = 100
-    
-    for k,v in pairs(data.raw["assembling-machine"]) do
-        log("Adjusting crafting time: "..k)
-        v["crafting_speed"] = 1/1000
-    end
-
-    for k,v in pairs(data.raw["furnace"]) do
-        log("Adjusting crafting time: "..k)
-        v["crafting_speed"] = 1/1000
-    end
-
+    player.force.manual_crafting_speed_modifier = 100000
 end)
+
 
 -- Event subscribers
 -- function subscribe_on_tick_event(func)
