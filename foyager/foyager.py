@@ -113,6 +113,7 @@ class Foyager:
         # init agents
         self.action_agent = ActionAgent(
             model_name=action_agent_model_name,
+            env=self.env,
             temperature=action_agent_temperature,
             request_timout=openai_api_request_timeout,
             ckpt_dir=ckpt_dir,
@@ -176,7 +177,6 @@ class Foyager:
                            )
 
         
-        # events = self.env.step()
         skills = self.skill_manager.retrieve_skills(query=self.context)
         #first observation is only does resources and simple-entities
         events = self.env.step(refresh_entities=['resource','simple-entitiy'])
@@ -233,13 +233,12 @@ class Foyager:
         
         
         if isinstance(parsed_result, dict):
-            code = parsed_result["program_code"] + "\n" + parsed_result["exec_code"]
+            code = parsed_result["program_code"]
+            function_name = parsed_result["function_name"]
             events = self.env.step(
-                code,
-                programs=self.skill_manager.programs,
+                code= code,function_name=function_name
             )
             self.recorder.record(events, self.task)
-            self.action_agent.update_chest_memory(events[-1][1]["nearbyChests"])
             success, critique = self.critic_agent.check_task_success(
                 events=events,
                 task=self.task,
@@ -263,8 +262,6 @@ class Foyager:
                     f"await givePlacedItemBack(bot, {U.json_dumps(blocks)}, {U.json_dumps(positions)})",
                     programs=self.skill_manager.programs,
                 )
-                events[-1][1]["inventory"] = new_events[-1][1]["inventory"]
-                events[-1][1]["voxels"] = new_events[-1][1]["voxels"]
                 
             new_skills = self.skill_manager.retrieve_skills(
                 query=self.context

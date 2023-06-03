@@ -3,22 +3,20 @@ from langchain.chat_models import ChatOpenAI
 from langchain.prompts import SystemMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from prompts import load_prompt
-from sklearn.cluster import MeanShift
-import pandas as pd
-from collections import defaultdict
-import numpy as np
-import json
 import utils as U
 from control_primitives_context import load_control_primitives_context
 import regex as re
 import time
 
+
 resources = "/opt/factorio/script-output/resource_data.json"
+RESTRICTED_KEYWORDS = ['script.on_event', 'raise_event']
 
 
 class ActionAgent:
     def __init__(
         self,
+        env,
         model_name="gpt-3.5-turbo",
         temperature=0,
         request_timout=120,
@@ -27,15 +25,12 @@ class ActionAgent:
         chat_log=True,
         execution_error=True,
     ):
+        self.env = env
         self.ckpt_dir = ckpt_dir
         self.chat_log = chat_log
         self.execution_error = execution_error
-        # U.f_mkdir(f"{ckpt_dir}/action")
-        # if resume:
-        #     print(f"\033[32mLoading Action Agent from {ckpt_dir}/action\033[0m")
-        #     self.chest_memory = U.load_json(f"{ckpt_dir}/action/chest_memory.json")
-        # else:
-        #     self.chest_memory = {}
+        U.f_mkdir(f"{ckpt_dir}/action")
+
         self.llm = ChatOpenAI(
             model_name=model_name,
             temperature=temperature,
@@ -81,56 +76,26 @@ class ActionAgent:
             programs=programs, response_format=response_format
         )
         assert isinstance(system_message, SystemMessage)
-        print(system_message)
+        print(f"System Message: {system_message}")
         return system_message
 
     def process_ai_message(self, message):
-        # assert isinstance(message, AIMessage)
-
-        retry = 3
         error = None
-        while retry > 0:
-            try:
-                code_pattern = re.compile(r"```(?:python|py)(.*?)```", re.DOTALL)
-                code = "\n".join(code_pattern.findall(message.content))
-                functions = []
-                # Extract the function names, parameters and body from the code (if necessary)
-                # ...
+        code_pattern = re.compile(r"Lua code:\n```(.*?)```", re.DOTALL)
+        function_pattern = re.compile(r"local function (.*?)\(\)", re.DOTALL)
 
-                # find the last async function
-                main_function = None
-                for function in reversed(functions):
-                    if function["type"] == "AsyncFunctionDeclaration":
-                        main_function = function
-                        break
+        code = code_pattern.findall(message.content)
+        function = function_pattern.findall(message.content)
+        assert(len(code) > 0),"Code not found"
+        assert(len(function) > 0 ),"Function name not found"
 
-                assert (
-                    main_function is not None
-                ), "No async function found. Your main function must be async."
-                assert (
-                    len(main_function["params"]) == 1
-                    and main_function["params"][0].name == "bot"
-                ), f"Main function {main_function['name']} must take a single argument named 'bot'"
+        assert(U.mod_utils.lua_code_verifier(code[0], RESTRICTED_KEYWORDS)), "Invalid lua code"
 
-                program_code = "\n\n".join(function["body"] for function in functions)
-                exec_code = f"await {main_function['name']}(bot);"
 
-                # Define an empty dictionary as local and global context for the exec function
-                context = {}
-
-                # Then execute the program code and the exec code separately
-                exec(program_code, context)
-                exec(exec_code, context)
-                return {
-                    "program_code": program_code,
-                    "program_name": main_function["name"],
-                    "exec_code": exec_code,
-                }
-            except Exception as e:
-                retry -= 1
-                error = e
-                time.sleep(1)
-        return f"Error parsing action response (before program execution): {error}"
+        return({
+            "program_code": code[0],
+            "function_name": function[0],
+        })
     
     def render_human_message(
         self, *, events, code="", task="", context="", critique=""

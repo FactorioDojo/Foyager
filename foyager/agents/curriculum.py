@@ -189,14 +189,14 @@ class CurriculumAgent:
         }
         return observation
 
-    def render_human_message(self, *, events, chest_observation):
+    def render_human_message(self, *, events):
         content = ""
         observation = self.render_observation(
-            events=events, chest_observation=chest_observation
+            events=events
         )
         if self.progress >= self.warm_up["context"]:
             questions, answers = self.run_qa(
-                events=events, chest_observation=chest_observation
+                events=events
             )
             i = 1
             for question, answer in zip(questions, answers):
@@ -222,10 +222,10 @@ class CurriculumAgent:
 
     def propose_next_task(self, *, events, max_retries=5):
         if self.progress == 0 and self.mode == "auto":
-            task = "Start handing mining resources to begin a factory"
-            context = "You just spawned into a new world. Start building out your resource production for a new factory"
+            task = "Place your burner drill and start gathering other resources."
+            context = "You just spawned into a new world. Maximize production and grow the factory"
             return task, context
-
+        
         messages = [
             self.render_system_message(),
             self.render_human_message(
