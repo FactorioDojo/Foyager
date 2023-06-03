@@ -48,7 +48,7 @@ end
 -- (ASYNC later)
 -- Requests a path when the map is clicked.
 function move(position)
-
+	clog("Info: Called function move()")
 	instant_move(position)
 
 	-- ASYNC STUFF FOR LATER
@@ -92,35 +92,36 @@ function move(position)
 end
 
 
-function instant_craft(count, recipe)
-	local craftable_count = get_craftable_count(recipe)
-    if craftable_count <= count then
-        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
-	end
+-- function instant_craft(count, recipe)
+-- 	local player = game.get_player(1)
+-- 	local craftable_count = player.get_craftable_count(recipe)
+--     if craftable_count <= count then
+--         clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+-- 	end
 
-end
+-- end
 
 -- Will perform an instant craft
 -- (ASYNC later)
 -- Handcraft one or more of a recipe
-local function craft(count, recipe)
+function craft(count, recipe)
+	-- Effectively instant
+	local player = game.get_player(1)
+
     clog("Info: called craft() function")
     if count <= 0 then
         clog("Error: craft count must be >= 0")
         return false
     end
 
-	instant_craft(count, recipe)
+	amt = player.begin_crafting{recipe = recipe, count = count}
+    if amt ~= count then
+        clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
+        return true
+    end
 
-	-- ASYNC STUFF FOR LATER
-	-- amt = game.players[1].begin_crafting{recipe = recipe, count = count}
-    -- if amt ~= count then
-    --     clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
-    --     return true
-    -- end
-
-    -- clog("Info: successfully crafted " .. cout .. " item")
-	-- return true
+    clog("Info: successfully crafted " .. cout .. " item")
+	return true
 end
 
 -- /c game.players[1].mine_entity(game.surfaces[1].find_entities_filtered{position = game.players[1].position, radius=10, limit = 1}[1])
@@ -132,7 +133,7 @@ end
 -- Will perform an instant mine
 -- (ASYNC later)
 -- Mine tile
-local function mine(entity)
+function mine(entity)
 	-- Perform checks
 	instant_mine(entity)
 end
@@ -147,7 +148,7 @@ end
 --   chems      - direction indicates the side where the fluids are input
 --   refineries - direction indicates the side where the fluids output
 --   pumps      - direction indicates the side where the fluid is input
-local function build(p, position, item, direction)
+function build(p, position, item, direction)
 
     clog("Info: called build() function")
 	-- Check if we have the item
@@ -227,7 +228,7 @@ end
 -- Adjust the filter of a filter inserter. It might work for other filter things too, though
 -- probably not splitters
 -- Returns false on failure 
-local function filter(p, position, filter, slot)
+function filter(p, position, filter, slot)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("filter: entity not selected: %d", state))
@@ -244,7 +245,7 @@ end
 
 -- Manually launch the rocket
 -- Returns false on failure 
-local function launch(p, position)
+function launch(p, position)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("launch: entity not selected: %d", state))
@@ -260,7 +261,7 @@ end
 
 -- Set the inventory slot space on chests (and probably other items, which are untested)
 -- Returns false on failure 
-local function limit(p, position, limit, slot)
+function limit(p, position, limit, slot)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("limit: entity not selected: %d", state))
@@ -292,7 +293,7 @@ end
 
 -- Set the input/output/filter settings for a splitter
 -- Returns false on failure 
-local function priority(p, position, input, output, filter)
+function priority(p, position, input, output, filter)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("priority: entity not selected: %d", state))
@@ -316,13 +317,13 @@ end
 -- Place an item from the character's inventory into an entity's inventory
 -- Returns false on failure 
 -- It is possible to put 0 items if none are in the character's inventory
-local function put(position, item, amount, slot)
+function put(position, item, amount, slot)
     clog("Info: Calling put() function")
 	local p = game.players[1]
     p.update_selected_entity(position)
 
 	if not p.selected then
-        clog("Dev Error: This should not happen")
+        clog("FATAL: This should not happen")
 		return false
 	end
 
@@ -367,7 +368,7 @@ end
 -- Items still in the machine not used in the new recipe will be placed in the character's inventory
 -- NOTE: There is a bug here. It is possible to set a recipe that is not yet available through
 -- completed research. For now, go on the honor system.
-local function recipe(p, position, recipe)
+function recipe(p, position, recipe)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("recipe: entity not selected: %d", state))
@@ -392,7 +393,7 @@ end
 
 -- Rotate an entity one quarter turn
 -- Returns false on failure 
-local function rotate(p, position, direction)
+function rotate(p, position, direction)
 	local opts = {reverse = false}
 	p.update_selected_entity(position)
 	if not p.selected then
@@ -418,7 +419,7 @@ local function rotate(p, position, direction)
 end
 
 -- Set the gameplay speed. 1 is standard speed
-local function speed(speed)
+function speed(speed)
 	game.speed = speed
 	return true
 end
@@ -426,16 +427,22 @@ end
 -- Take an item from the entity's inventory into the character's inventory
 -- Returns false on failure
 -- It is possible to take 0 items if none are in the entity's inventory
-local function take(p, position, item, amount, slot)
+function take(position, item, amount, slot)
+
+	local p = game.get_player(1)
+
+    clog("Info: Calling take() function")
 	p.update_selected_entity(position)
 
 	if not p.selected then
 		--debug(p, string.format("take: entity not selected: %d", state))
+		clog("Error: entity not selected")
 		return false
 	end
 
 	-- Check if we are in reach of this tile
 	if not p.can_reach_entity(p.selected) then
+        clog("Error: entity is not reachable")
 		--debug(p, string.format("take: entity not reachable: %d", state))
 		return false
 	end
@@ -454,23 +461,26 @@ local function take(p, position, item, amount, slot)
 	end
 
 	if amountintarget == 0 then
-		debug(p, string.format("take: nothing to take: %d", state))
+        clog("Warning: nothing to take")
+		-- debug(p, string.format("take: nothing to take: %d", state))
 		return true
 	end
 
 	local taken = p.insert{name=item, count=totake}
 
 	if taken == 0 then
-		debug(p, string.format("take: nothing taken: %d", state))
+        clog("Warning: nothing taken")
+		-- debug(p, string.format("take: nothing taken: %d", state))
 		return true
 	end
 
 	otherinv.remove{name=item, count=taken}
+    clog("Info: items taken successfully")
 	return true
 end
 
 -- Set the current research
-local function tech(p, research)
+function tech(p, research)
 	p.force.research_queue_enabled = true
 	p.force.add_research(research)
 	return true
@@ -480,7 +490,7 @@ end
 -- Returns false on failure 
 -- NOTE: This should only be used to transfer items into an empty entity because it
 -- simply overwrites the contents of the slots of the entity. For now, go on the honor system.
-local function transfer(p, position, numslots, slot)
+function transfer(p, position, numslots, slot)
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("transfer: entity not selected: %d", state))
@@ -510,7 +520,7 @@ local function transfer(p, position, numslots, slot)
 end
 
 -- Drop items on the ground (like pressing the 'z' key)
-local function drop(p, position, item)
+function drop(p, position, item)
 	local canplace = p.can_place_entity{name = item, position = position}
 	if canplace then
 		p.surface.create_entity{name = "item-on-ground",
@@ -527,7 +537,7 @@ local function drop(p, position, item)
 end
 
 -- Make a quick blueprint of an area then paste that blueprint in another location
-local function blueprint(p, topleft, bottomright, position, direction)
+function blueprint(p, topleft, bottomright, position, direction)
 	p.cursor_stack.set_stack('blueprint')
 	p.cursor_stack.create_blueprint{area = {topleft, bottomright},
 	                                surface=p.surface, force=p.force}
