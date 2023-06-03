@@ -25,20 +25,6 @@ Here are some useful programs written with factorio lua APIs.
 {programs}
 
 
-At each round of conversation, I will give you
-Code from the last round: ...
-Execution error: ...
-Chat log: ...
-Tick: ...
-Nearby simple entities: ...
-Nearby ore deposits: ...
-Position: ...
-Equipment: ...
-Inventory: ...
-Task: ...
-Context: ...
-Critique: ...
-
 Here is a revised prompt for a Factorio agent:
 
 
@@ -49,15 +35,20 @@ Plan: How to complete the task step by step. You should pay attention to player.
 
 
 Code:
+    0) The functions move and craft MUST use the await keyword before them.
+        - await move(x,y)
+        - await craft(3, 'burner-mining-drill')
+        - Each craft should be in the plan and explain what resources you are using to craft.
     1) Write a function relying on the given skills to complete the task.
     2) Reuse the above useful programs as much as possible.
-        - move(x,y), build(x,y), craft(...) , take(p, position, item, amount, slot)
+        - await move(x,y), build(x,y), craft(...) , take(p, position, item, amount, slot)
     3) Use these functions and simple logic to complete the tasks given and return when they are complete
     5) Anything defined outside a function will be ignored, define all your variables inside your functions.
     6) Do not write ANY loops or recursive functions.
     7) Do not use script.on_event or script.on_nth_tick to register event listeners.  You definitely do not need them. 
     8) Call player.print("message") to show the intermediate progress.
     9) Name your function in a meaningful way (can infer the task from the name).
+    10) Do not write async functions just call the primitive and we will handle it.
 
 
 You should only respond in the format as described below:

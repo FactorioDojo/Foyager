@@ -1,16 +1,14 @@
 
 BASE = "/opt/factorio/script-output/"
 RESOURCES = "/opt/factorio/script-output/resource_data.json"
-
-
+from luaparser import ast
+from luaparser.astnodes import *
 from sklearn.cluster import MeanShift
 import pandas as pd
 from collections import defaultdict
 import numpy as np
 import json
-
-
-import json
+import re
 
 def format_resource_json(data):
     result = {}
@@ -42,7 +40,6 @@ def resource_clustering():
     try:
         with open(RESOURCES) as f:
             data =  list(json.load(f))
-            print(f"RESOURCES:{data}")
             resource_type = defaultdict(list)
             for entity in data:
                 resource_type[entity['entity_type']].append(entity['position'])
@@ -127,3 +124,12 @@ def process_filtered_entity(entity: str):
     except EnvironmentError: # parent of IOError, OSError *and* WindowsError where available
         print("Failed to read Writeouts from game")
 
+
+def lua_code_verifier(lua_code, restricted_keywords):
+    # Search the Lua code for the restrictions
+    for keyword in restricted_keywords:
+        if re.search(lua_code, keyword):
+            print(f"Restricted keyword or function used")
+            return False
+
+    return True
