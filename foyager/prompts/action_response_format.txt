@@ -14,5 +14,4 @@ Lua code:
 local function complete_task(x, y)
 
 end
-
 ```

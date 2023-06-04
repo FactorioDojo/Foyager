@@ -11,6 +11,7 @@ from agents import ActionAgent
 from agents import CriticAgent
 from agents import CurriculumAgent
 from agents import SkillManager
+import anthropic
 
 
 # TODO: remove event memory
@@ -21,6 +22,7 @@ class Foyager:
         rcon_port: int = None,
         rcon_password: str =  None,
         openai_api_key: str = None,
+        anthropic_api_key:str=None,
         env_wait_ticks: int = 20,
         env_request_timeout: int = 600,
         max_iterations: int = 160,
@@ -109,13 +111,12 @@ class Foyager:
 
         # set openai api key
         os.environ["OPENAI_API_KEY"] = openai_api_key
+        os.envirorn = os.environ["ANTHROPIC_API_KEY"] = anthropic_api_key
 
         # init agents
         self.action_agent = ActionAgent(
             model_name=action_agent_model_name,
             env=self.env,
-            temperature=action_agent_temperature,
-            request_timout=openai_api_request_timeout,
             ckpt_dir=ckpt_dir,
             resume=resume,
             chat_log=action_agent_show_chat_log,
@@ -220,12 +221,17 @@ class Foyager:
         if self.action_agent_rollout_num_iter < 0:
             raise ValueError("Agent must be reset before stepping")
         
-        ai_message = self.action_agent.llm(self.messages)
-        
-        print(f"\033[34m****Action Agent ai message****\n{ai_message.content}\033[0m")
-        
+        ai_message = self.action_agent.llm.completion(
+        prompt=f"{anthropic.HUMAN_PROMPT}{self.messages[0]}\nSYSTEM MESSAGE:\n{self.messages[1]}{anthropic.AI_PROMPT}",
+        stop_sequences=[],
+        model="claude-v1",
+        max_tokens_to_sample=1000,
+        stream=False)
+
+        print(f"\033[34m****Action Agent ai message****\n{ai_message['completion']}")
+                
         self.conversations.append(
-            (self.messages[0].content, self.messages[1].content, ai_message.content)
+            (self.messages[0], self.messages[1], ai_message['completion'])
         )
         
         parsed_result = self.action_agent.process_ai_message(message=ai_message)
@@ -243,45 +249,9 @@ class Foyager:
                 events=events,
                 task=self.task,
                 context=self.context,
-                chest_observation=self.action_agent.render_chest_observation(),
                 max_retries=5,
             )
 
-            # TODO: Modify this code block to handle factorio failed builds 
-            if self.reset_placed_if_failed and not success:
-                # revert all the placing event in the last step
-                blocks = []
-                positions = []
-                for event_type, event in events:
-                    if event_type == "onSave" and event["onSave"].endswith("_placed"):
-                        block = event["onSave"].split("_placed")[0]
-                        position = event["status"]["position"]
-                        blocks.append(block)
-                        positions.append(position)
-                new_events = self.env.step(
-                    f"await givePlacedItemBack(bot, {U.json_dumps(blocks)}, {U.json_dumps(positions)})",
-                    programs=self.skill_manager.programs,
-                )
-                
-            new_skills = self.skill_manager.retrieve_skills(
-                query=self.context
-                + "\n\n"
-                + self.action_agent.summarize_chatlog(events)
-            )
-            system_message = self.action_agent.render_system_message(skills=new_skills)
-            human_message = self.action_agent.render_human_message(
-                events=events,
-                code=parsed_result["program_code"],
-                task=self.task,
-                context=self.context,
-                critique=critique,
-            )
-            self.last_events = copy.deepcopy(events)
-            self.messages = [system_message, human_message]
-        else:
-            assert isinstance(parsed_result, str)
-            self.recorder.record([], self.task)
-            print(f"\033[34m{parsed_result} Trying again!\033[0m")
         assert len(self.messages) == 2
         self.action_agent_rollout_num_iter += 1
         done = (
