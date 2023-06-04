@@ -7,6 +7,8 @@ import utils as U
 from control_primitives_context import load_control_primitives_context
 import regex as re
 import time
+import anthropic
+import os
 
 
 resources = "/opt/factorio/script-output/resource_data.json"
@@ -17,7 +19,7 @@ class ActionAgent:
     def __init__(
         self,
         env,
-        model_name="gpt-3.5-turbo",
+        model_name="claude-instant-v1",
         temperature=0,
         request_timout=120,
         ckpt_dir="ckpt",
@@ -31,11 +33,7 @@ class ActionAgent:
         self.execution_error = execution_error
         U.f_mkdir(f"{ckpt_dir}/action")
 
-        self.llm = ChatOpenAI(
-            model_name=model_name,
-            temperature=temperature,
-            request_timeout=request_timout,
-        )
+        self.llm = anthropic.Client(os.environ["ANTHROPIC_API_KEY"])
 
     """
         Save entity information to /action/entity_memory.json
@@ -84,8 +82,8 @@ class ActionAgent:
         code_pattern = re.compile(r"Lua code:\n```(.*?)```", re.DOTALL)
         function_pattern = re.compile(r"local function (.*?)\(\)", re.DOTALL)
 
-        code = code_pattern.findall(message.content)
-        function = function_pattern.findall(message.content)
+        code = code_pattern.findall(message['completion'])
+        function = function_pattern.findall(message['completion'])
         assert(len(code) > 0),"Code not found"
         assert(len(function) > 0 ),"Function name not found"
 
