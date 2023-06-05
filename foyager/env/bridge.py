@@ -6,6 +6,7 @@ from rcon.source import Client
 import json
 import utils as U
 import uuid
+from .rLua import  rLuaCompiler
 
 # We will not be using a javascript server
 class FoyagerEnv():
@@ -29,8 +30,26 @@ class FoyagerEnv():
 
         for entity in entities:
             client.run(f"/c remote.call('writeouts', 'writeout_filtered_entities', '{entity}')")
+    
+    """
+    Compile rLua(with await) to Lua. Return compiler errors if any.
+    
+    Args:
+        function_name: The name of the script function to be loaded
+        code: Script code
+    Returns:
+        result, error_log/target_code
+    """
+    def compile_lua(self, source_code):
+        rLua_compiler = rLuaCompiler(source_code)
+        rLua_compiler.compile_to_lua()
+        if(rLua_compiler.error_log):
+            return False, rLua_compiler.error_log
+        
+        return True, rLua_compiler.target_code
                 
     """
+    Compile rLua(with await) to Lua. Return compiler errors if any.
     Sends a script to the factorio engine to be loaded and executed
     
     Args:
@@ -48,6 +67,15 @@ class FoyagerEnv():
     code: str = "",
     refresh_entities: list[str] = []
     ) -> json:
+        
+        # Compile code from rLua to Lua
+        compiled_lua_pair = self.compile_lua(code) 
+        if compiled_lua_pair[0] == False:
+            events.append(compiled_lua_pair[1])
+            return events
+        
+        code = compiled_lua_pair[1]
+         
         client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
         with client as c:
             if code:
@@ -57,6 +85,9 @@ class FoyagerEnv():
                     execute_message_id = uuid.uuid4()
                     c.run(f"/c remote.call('scripts', 'execute_script', '{execute_message_id}', '{function_name})")
 
+            # Get response from the game
+            response = self.get_response(load_message_id, execute_message_id)
+            
             # events is the return value of the command and the state of any entities requested refreshed after the execution        
             events = []
             events.append({"inventory": U.mod_utils.parse_inventory()})
@@ -95,6 +126,10 @@ class FoyagerEnv():
         if not os.path.isfile():
             raise FileNotFoundError(self.log_path + " cannot be found")
         else:
+            
+            # Continue polling until the script is finished, or failed to compile
+            # TODO
+            
             with open(self.log_path) as f:
                 content = f.read().splitlines()
                 # Find lines containing load_message_id and execute_message_id

@@ -33,113 +33,151 @@ function positions_approximately_equal(a, b)
 end
 
 
-function instant_move(position)
-
-	local surface = game.get_surface("nauvis")
-	local player = game.get_player(1)
-	-- Check if the destination is blocked
-
-	-- Teleport player
-	player.teleport(position, surface, true)
-	clog("Info: Player successfully moved to location")	
-end
-
--- Will perform an instant teleport
--- (ASYNC later)
+-- ASYNC
 -- Requests a path when the map is clicked.
 function move(position)
-	clog("Info: Called function move()")
-	instant_move(position)
+	clog("Info: Called move() function")
 
-	-- ASYNC STUFF FOR LATER
-	--     local surface = game.get_surface("nauvis")
-	--     local character = game.get_player(1).character
-	--     local position = {x = x, y = y}
-	--     local collision_mask = {
-	--       "water-tile",
-	--       "object-layer",
-	--       "player-layer",
-	--       "train-layer",
-	--       "consider-tile-transitions",
-	--   }
+	    local surface = game.get_surface("nauvis")
+	    local character = game.get_player(1).character
+	    local position = {x = x, y = y}
+	    local collision_mask = {
+	      "water-tile",
+	      "object-layer",
+	      "player-layer",
+	      "train-layer",
+	      "consider-tile-transitions",
+	  }
 
-	--     --
-	--     t = character.bounding_box
+	    --
+	    t = character.bounding_box
 		
-	--     --probable reason for pathing over water is collision masks.
-	--     --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
+	    --probable reason for pathing over water is collision masks.
+	    --follow this link for collision masks https://wiki.factorio.com/Types/CollisionMask
 
-	--     pos = character.position
-	--     --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
-	--     --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
-	--     local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
-	--     local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
+	    pos = character.position
+	    --game.players[1].print(t.left_top.x .. ", " .. t.left_top.y)
+	    --game.players[1].print(t.right_bottom.x .. ", " .. t.right_bottom.y)
+	    local bbox ={{pos.x - 0.5, pos.y - 0.5},{pos.x + 0.5, pos.y + 0.5}}
+	    local bbox2 = {{-0.5,-0.5},{0.5,0.5}}
 
-	--     global.path_received = false
+	    global.path_received = false
 
 
-	--     surface.request_path{
-	--         bounding_box = bbox2,
-	--         collision_mask = {"water-tile"},
-	--         start = character.position,
-	--         goal = position,
-	--         force = "player",
-	--         radius = 3.0,
-	--         path_resolution_modifier = 0
-	--     }
+	    surface.request_path{
+	        bounding_box = bbox2,
+	        collision_mask = {"water-tile"},
+	        start = character.position,
+	        goal = position,
+	        force = "player",
+	        radius = 3.0,
+	        path_resolution_modifier = 0
+	    }
 
-	--     subscribe_on_tick_event(on_tick_move_event)
+	    subscribe_on_tick_event(on_tick_move_event)
 end
 
 
--- function instant_craft(count, recipe)
--- 	local player = game.get_player(1)
--- 	local craftable_count = player.get_craftable_count(recipe)
---     if craftable_count <= count then
---         clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
--- 	end
-
--- end
-
--- Will perform an instant craft
--- (ASYNC later)
+-- ASYNC
 -- Handcraft one or more of a recipe
 function craft(count, recipe)
-	-- Effectively instant
+	
+    clog("Info: called craft() function")
 	local player = game.get_player(1)
 
-    clog("Info: called craft() function")
     if count <= 0 then
         clog("Error: craft count must be >= 0")
         return false
     end
 
+	-- Set globals
+	global.craft_recipe = recipe
+
 	amt = player.begin_crafting{recipe = recipe, count = count}
+
+	global.amount_to_craft = amt
+
     if amt ~= count then
         clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
         return true
     end
 
     clog("Info: successfully crafted " .. cout .. " item")
+
+	raise_event(global.ASYNC_EXEC_COMPLETE)
+
 	return true
 end
 
--- /c game.players[1].mine_entity(game.surfaces[1].find_entities_filtered{position = game.players[1].position, radius=10, limit = 1}[1])
-function instant_mine(entity)
+
+-- ASYNC
+-- Mine resource
+function mine_resource(entity, count)
+
+    clog("Info: called mine_resource() function")
 	local player = game.get_player(1)
-	player.mine_entity(entity)
+	
+
+	player.update_selected_entity(entity.position)
+
+	-- Check if the selected entity is a resource
+	if player.selected.type ~= "resource" then
+		clog("Error: mine_entity(entity) should be called when entity is not a resource.")
+	end
+
+	if not player.selected then
+		clog("Error: entity not selected")
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not player.can_reach_entity(player.selected) then
+		clog("Error: entity not reachable")
+		return false
+	end
+
+	-- Set globals	
+	global.mining_position = entity.position
+	global.is_mining_resource = true
+	global.resources_left_to_mine = count
+
+	-- Subscribe on_tick
+	subscribe_on_tick_event(on_tick_mine_event)
 end
 
--- Will perform an instant mine
--- (ASYNC later)
--- Mine tile
-function mine(entity)
-	-- Perform checks
-	instant_mine(entity)
+
+-- ASYNC
+-- Mine entity 
+function mine_entity(entity)
+
+    clog("Info: called mine_entity() function")
+	local player = game.get_player(1)
+	
+	-- Check if the selected entity is a resource
+	if player.selected.type == "resource" then
+		clog("Error: mine_resource(entity) should be called when entity is a resource.")
+	end
+
+
+	player.update_selected_entity(entity.position)
+	if not player.selected then
+		clog("Error: entity not selected")
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not player.can_reach_entity(player.selected) then
+		clog("Error: entity not reachable")
+		return false
+	end
+
+	-- Set globals	
+	global.mining_position = entity.position
+	global.is_mining_entity = true
+
+	-- Subscribe on_tick
+	subscribe_on_tick_event(on_tick_mine_event)
 end
 
-
-
+-- ASYNC
 -- Create an entity on the surface. In most cases this is building a structure/item/entity
 -- It checks to see if a fast-replace works first.
 -- Returns false on failure to prevent advancing state until within reach and/or item is in the inventory
@@ -148,7 +186,9 @@ end
 --   chems      - direction indicates the side where the fluids are input
 --   refineries - direction indicates the side where the fluids output
 --   pumps      - direction indicates the side where the fluid is input
-function build(p, position, item, direction)
+function build(position, item, direction)
+
+	local p = game.get_player(1)
 
     clog("Info: called build() function")
 	-- Check if we have the item
@@ -213,7 +253,7 @@ function build(p, position, item, direction)
 			asm = p.surface.create_entity{name = item, position = position, direction = direction, force="player"}
 		end
 	else
-        clog("Error: cannot build item at position")
+        clog("Error: cannot build entity at this position, position is occupied")
 		--debug(p, string.format("build: cannot place: %d", state))
 		return false
 	end
@@ -222,98 +262,50 @@ function build(p, position, item, direction)
 	end
 
     clog("Info: successfully built item at position")
+
+	raise_event(global.ASYNC_EXEC_COMPLETE)
+
 	return true
 end
 
--- Adjust the filter of a filter inserter. It might work for other filter things too, though
--- probably not splitters
+-- ASYNC
+-- Set the recipe of an assembling machine, chemical plant, or oil refinery (anything I'm missing?)
 -- Returns false on failure 
-function filter(p, position, filter, slot)
+-- Items still in the machine not used in the new recipe will be placed in the character's inventory
+-- NOTE: There is a bug here. It is possible to set a recipe that is not yet available through
+-- completed research. For now, go on the honor system.
+function recipe(position, recipe)
+	clog("Info: called recipe() function")
+
+	local p = game.get_player(1)
+
 	p.update_selected_entity(position)
 	if not p.selected then
-		debug(p, string.format("filter: entity not selected: %d", state))
+		clog("Error: entity not selected")
 		return false
 	end
 	-- Check if we are in reach of this tile
 	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("filter: entity not reachable: %d", state))
-	 	return false
+		clog("Error: entity not reachable")
+		return false
 	end
-	p.selected.set_filter(slot, filter)
+	if recipe == "none" then
+		recipe = nil
+	end
+	local items = p.selected.set_recipe(recipe)
+	if items then
+		for name, count in pairs(items) do
+			p.insert{name=name, count=count}
+		end
+	end
+
+	clog("Info: successfully set recipe")
+	raise_event(global.ASYNC_EXEC_COMPLETE)
+
 	return true
 end
 
--- Manually launch the rocket
--- Returns false on failure 
-function launch(p, position)
-	p.update_selected_entity(position)
-	if not p.selected then
-		debug(p, string.format("launch: entity not selected: %d", state))
-		return false
-	end
-	-- Check if we are in reach of this tile
-	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("launch: entity not reachable: %d", state))
-		return false
-	end
-	return p.selected.launch_rocket()
-end
-
--- Set the inventory slot space on chests (and probably other items, which are untested)
--- Returns false on failure 
-function limit(p, position, limit, slot)
-	p.update_selected_entity(position)
-	if not p.selected then
-		debug(p, string.format("limit: entity not selected: %d", state))
-		return false
-	end
-	-- Check if we are in reach of this tile
-	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("limit: entity not reachable: %d", state))
-		return false
-	end
-
-	local otherinv = p.selected.get_inventory(slot)
-
-	if not otherinv then
-		debug(p, string.format("limit: no slot: %d", state))
-		return true
-	end
-
-	--hasbar No longer in the API
-	--if not otherinv.hasbar() then
-	--	debug(p, string.format("limit: entity has no bar: %d", state))
-	--	return true
-	--end
-
-	-- Setting set_bar to 1 completely limits all slots, so it's off by one
-	otherinv.set_bar(limit+1)
-	return true
-end
-
--- Set the input/output/filter settings for a splitter
--- Returns false on failure 
-function priority(p, position, input, output, filter)
-	p.update_selected_entity(position)
-	if not p.selected then
-		debug(p, string.format("priority: entity not selected: %d", state))
-		return false
-	end
-	-- Check if we are in reach of this tile
-	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("priority: entity not reachable: %d", state))
-	    return false
-	end
-	p.selected.splitter_input_priority = input
-	p.selected.splitter_output_priority = output
-	if filter == "none" then
-		p.selected.splitter_filter = nil
-	else
-		p.selected.splitter_filter = filter
-	end
-	return true
-end
-
+-- ASYNC
 -- Place an item from the character's inventory into an entity's inventory
 -- Returns false on failure 
 -- It is possible to put 0 items if none are in the character's inventory
@@ -360,70 +352,13 @@ function put(position, item, amount, slot)
 
     clog("Info: successfully  inserted " .. amount .. " items")
 	p.remove_item{name=item, count=inserted}
+
+	raise_event(global.ASYNC_EXEC_COMPLETE)
+
 	return true
 end
 
--- Set the recipe of an assembling machine, chemical plant, or oil refinery (anything I'm missing?)
--- Returns false on failure 
--- Items still in the machine not used in the new recipe will be placed in the character's inventory
--- NOTE: There is a bug here. It is possible to set a recipe that is not yet available through
--- completed research. For now, go on the honor system.
-function recipe(p, position, recipe)
-	p.update_selected_entity(position)
-	if not p.selected then
-		debug(p, string.format("recipe: entity not selected: %d", state))
-		return false
-	end
-	-- Check if we are in reach of this tile
-	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("recipe entity not reachable: %d", state))
-		return false
-	end
-	if recipe == "none" then
-		recipe = nil
-	end
-	local items = p.selected.set_recipe(recipe)
-	if items then
-		for name, count in pairs(items) do
-			p.insert{name=name, count=count}
-		end
-	end
-	return true
-end
-
--- Rotate an entity one quarter turn
--- Returns false on failure 
-function rotate(p, position, direction)
-	local opts = {reverse = false}
-	p.update_selected_entity(position)
-	if not p.selected then
-		debug(p, string.format("rotate: entity not selected: %d", state))
-		return false
-	end
-	-- Check if we are in reach of this tile
-	if not p.can_reach_entity(p.selected) then
-		debug(p, string.format("rotate: entity not reachable: %d", state))
-	 	return false
-	end
-	if direction == "ccw" then
-		opts = {reverse = true}
-	end
-	p.selected.rotate(opts)
-	-- Not sure this is a good idea. Rotating a belt 180 requires two rotations. But
-	-- rotating an underground belt 180 requires only one rotation. So maybe allowing 180
-	-- will cause some headaches.
-	if direction == "180" then
-		p.selected.rotate(opts)
-	end
-	return true
-end
-
--- Set the gameplay speed. 1 is standard speed
-function speed(speed)
-	game.speed = speed
-	return true
-end
-
+-- ASYNC
 -- Take an item from the entity's inventory into the character's inventory
 -- Returns false on failure
 -- It is possible to take 0 items if none are in the entity's inventory
@@ -476,6 +411,148 @@ function take(position, item, amount, slot)
 
 	otherinv.remove{name=item, count=taken}
     clog("Info: items taken successfully")
+
+	raise_event(global.ASYNC_EXEC_COMPLETE)
+
+	return true
+end
+
+----------- Functions below are not needed for the current agent to function ------------
+
+-- Adjust the filter of a filter inserter. It might work for other filter things too, though
+-- probably not splitters
+-- Returns false on failure 
+function filter(position, filter, slot)
+
+	local p = game.get_player(1)
+
+	p.update_selected_entity(position)
+	if not p.selected then
+		debug(p, string.format("filter: entity not selected: %d", state))
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not p.can_reach_entity(p.selected) then
+		debug(p, string.format("filter: entity not reachable: %d", state))
+	 	return false
+	end
+	p.selected.set_filter(slot, filter)
+	return true
+end
+
+-- Manually launch the rocket
+-- Returns false on failure 
+function launch(position)
+
+	local p = game.get_player(1)
+
+	p.update_selected_entity(position)
+	if not p.selected then
+		debug(p, string.format("launch: entity not selected: %d", state))
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not p.can_reach_entity(p.selected) then
+		debug(p, string.format("launch: entity not reachable: %d", state))
+		return false
+	end
+	return p.selected.launch_rocket()
+end
+
+-- Set the inventory slot space on chests (and probably other items, which are untested)
+-- Returns false on failure 
+function limit(position, limit, slot)
+
+	local p = game.get_player(1)
+
+	p.update_selected_entity(position)
+	if not p.selected then
+		debug(p, string.format("limit: entity not selected: %d", state))
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not p.can_reach_entity(p.selected) then
+		debug(p, string.format("limit: entity not reachable: %d", state))
+		return false
+	end
+
+	local otherinv = p.selected.get_inventory(slot)
+
+	if not otherinv then
+		debug(p, string.format("limit: no slot: %d", state))
+		return true
+	end
+
+	--hasbar No longer in the API
+	--if not otherinv.hasbar() then
+	--	debug(p, string.format("limit: entity has no bar: %d", state))
+	--	return true
+	--end
+
+	-- Setting set_bar to 1 completely limits all slots, so it's off by one
+	otherinv.set_bar(limit+1)
+	return true
+end
+
+-- Set the input/output/filter settings for a splitter
+-- Returns false on failure 
+function priority(position, input, output, filter)
+
+	local p = game.get_player(1)
+
+	p.update_selected_entity(position)
+	if not p.selected then
+		debug(p, string.format("priority: entity not selected: %d", state))
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not p.can_reach_entity(p.selected) then
+		debug(p, string.format("priority: entity not reachable: %d", state))
+	    return false
+	end
+	p.selected.splitter_input_priority = input
+	p.selected.splitter_output_priority = output
+	if filter == "none" then
+		p.selected.splitter_filter = nil
+	else
+		p.selected.splitter_filter = filter
+	end
+	return true
+end
+
+-- Rotate an entity one quarter turn
+-- Returns false on failure 
+function rotate(position, direction)
+
+	local p = game.get_player(1)
+
+	local opts = {reverse = false}
+	p.update_selected_entity(position)
+	if not p.selected then
+		debug(p, string.format("rotate: entity not selected: %d", state))
+		return false
+	end
+	-- Check if we are in reach of this tile
+	if not p.can_reach_entity(p.selected) then
+		debug(p, string.format("rotate: entity not reachable: %d", state))
+	 	return false
+	end
+	if direction == "ccw" then
+		opts = {reverse = true}
+	end
+	p.selected.rotate(opts)
+	-- Not sure this is a good idea. Rotating a belt 180 requires two rotations. But
+	-- rotating an underground belt 180 requires only one rotation. So maybe allowing 180
+	-- will cause some headaches.
+	if direction == "180" then
+		p.selected.rotate(opts)
+	end
+	return true
+end
+
+-- Set the gameplay speed. 1 is standard speed
+function speed(speed)
+	game.speed = speed
 	return true
 end
 
@@ -490,7 +567,10 @@ end
 -- Returns false on failure 
 -- NOTE: This should only be used to transfer items into an empty entity because it
 -- simply overwrites the contents of the slots of the entity. For now, go on the honor system.
-function transfer(p, position, numslots, slot)
+function transfer(position, numslots, slot)
+
+	local p = game.get_player(1)
+
 	p.update_selected_entity(position)
 	if not p.selected then
 		debug(p, string.format("transfer: entity not selected: %d", state))
@@ -520,7 +600,10 @@ function transfer(p, position, numslots, slot)
 end
 
 -- Drop items on the ground (like pressing the 'z' key)
-function drop(p, position, item)
+function drop(position, item)
+
+	local p = game.get_player(1)
+
 	local canplace = p.can_place_entity{name = item, position = position}
 	if canplace then
 		p.surface.create_entity{name = "item-on-ground",
@@ -537,7 +620,8 @@ function drop(p, position, item)
 end
 
 -- Make a quick blueprint of an area then paste that blueprint in another location
-function blueprint(p, topleft, bottomright, position, direction)
+function blueprint(topleft, bottomright, position, direction)
+	local p = game.get_player(1)
 	p.cursor_stack.set_stack('blueprint')
 	p.cursor_stack.create_blueprint{area = {topleft, bottomright},
 	                                surface=p.surface, force=p.force}

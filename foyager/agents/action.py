@@ -1,5 +1,4 @@
 from langchain.chat_models import ChatOpenAI
-from langchain.chat_models import ChatOpenAI
 from langchain.prompts import SystemMessagePromptTemplate
 from langchain.schema import AIMessage, HumanMessage, SystemMessage
 from prompts import load_prompt
@@ -87,7 +86,7 @@ class ActionAgent:
         assert(len(code) > 0),"Code not found"
         assert(len(function) > 0 ),"Function name not found"
 
-        assert(U.mod_utils.lua_code_verifier(code[0], RESTRICTED_KEYWORDS)), "Invalid lua code"
+        # assert(U.mod_utils.lua_code_verifier(code[0], RESTRICTED_KEYWORDS)), "Invalid lua code"
 
 
         return({

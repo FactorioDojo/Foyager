@@ -77,7 +77,7 @@ class rLuaCompiler:
 
 
     # TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
-    def compile_to_rlua(self):
+    def compile_to_lua(self):
         #checks for compiler errors
         
         source_lua = self.source_code
