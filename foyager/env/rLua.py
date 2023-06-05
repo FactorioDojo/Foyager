@@ -93,10 +93,24 @@ def is_valid(source_lua):
             return False
         
         return True
+#returns true if await found in if statment
+def check_await_in_if_statements(lua_code):
+    # Regular expression pattern to match "if" statements containing "await"
+    pattern = r"if\s*\(.*?\)\s*then\s*.*?\n\s*end"
+
+    # Find all matches in the Lua code
+    matches = re.findall(pattern, lua_code, re.DOTALL)
+
+    # Check if any matches contain the "await" keyword
+    for match in matches:
+        if "await" in match:
+            return True
+
+    # If no matches contain "await"
+    return False
+
 
 # TODO: If function has await anywhere, raise global.ASYNC_EXEC_COMPLETE at the end of the last event function
-# TODO: Async functions can not be in a loop?
-# TODO: No recursion
 def compile_to_rlua(source_lua):
     #checks for compiler errors
     
