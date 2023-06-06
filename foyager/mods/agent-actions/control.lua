@@ -6,11 +6,11 @@ actions = require("actions")
 
 
 
--- Tables of subscriber functions
+-- Table of subscriber functions
 on_tick_subscribers = {}
 
-script.on_init(function()
 
+function init()
 
 	-- Global variables for the move function
 	global.path_received = false 
@@ -30,6 +30,9 @@ script.on_init(function()
     global.resources_mined = 0
     global.resources_left_to_mine = 0
 
+
+    ------------ ASYNC Execution ------------
+
 	-- Events and event ptrs
 	global.event_ptrs = {}
 	global.events = {}
@@ -37,20 +40,52 @@ script.on_init(function()
 
 	-- Create a custom event for successfully finished tasks 
     -- Not actually used for anything
-	global.SCRIPT_SUCCESS_EVENT = generate_event_name() 
+	global.SCRIPT_SUCCESS_EVENT = script.generate_event_name() 
 	
     -- Create a custom event for tasks that failed
-	global.SCRIPT_FAILED_EVENT = generate_event_name()
+	global.SCRIPT_FAILED_EVENT = script.generate_event_name()
 	
     -- Create a custom event for executing a script 
     -- Starts the task process 
-	global.SCRIPT_EXECUTED_EVENT = generate_event_name()
+	global.SCRIPT_EXECUTED_EVENT = script.generate_event_name()
     
     -- Create a custom event for finishing an async function
     -- Raised upon any async-type function completing execution.
     -- This includes runtime scripts
-    global.ASYNC_EXEC_COMPLETE = generate_event_name()
+    global.ASYNC_EXEC_COMPLETE = script.generate_event_name()
 
+    
+
+    -- Script execution. Prime the event ptr.
+    script.on_event(global.SCRIPT_EXECUTED_EVENT, function(event)
+        -- Set event_ptr
+        global.current_event_ptr = event.function_name
+    end)
+
+    -- Async execution
+    script.on_event(global.ASYNC_EXEC_COMPLETE, function(event)
+        -- Find the next event_ptr
+        local next_event_ptr = global.event_ptr[global.current_event_ptr]
+        -- Does it exist?
+        if next_event_ptr ~= nil then
+            -- Locate the event
+            local next_event = global.events[next_event_ptr]
+            -- Set the current event ptr
+            global.current_event_ptr = next_event_ptr
+            -- Fire event
+            raise_event(next_event)
+        else
+            global.current_event_ptr = nil
+        end
+    end)
+
+end
+
+
+commands.add_command("init", nil, function(command)
+    init()
+    global.message_id = 1
+    clog("Info: Mod init successful")
 end)
 
 
@@ -131,7 +166,7 @@ script.on_event(defines.events.on_player_crafted_item, function(event)
             global.amount_to_craft = 0
             raise_event(global.ASYNC_EXEC_COMPLETE)
         else
-            global.amount_crafted += 1
+            global.amount_crafted = global.amount_crafted + 1
         end
     end
 end)
@@ -159,7 +194,7 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
             -- Raise ASYNC complete
             raise_event(global.ASYNC_EXEC_COMPLETE)
         else
-            global.resources_mined += 1
+            global.resources_mined = global.resources_mined + 1
         end
     end
 
@@ -176,36 +211,14 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
 
 end)
 
------------- ASYNC Execution ------------
 
--- Script execution. Prime the event ptr.
-script.on_event(global.SCRIPT_EXECUTED_EVENT, function(event, function_name)
-    -- Set event_ptr
-    global.current_event_ptr = function_name
-end)
-
--- Async execution
-script.on_event(global.ASYNC_EXEC_COMPLETE, fuction(event)
-    -- Find the next event_ptr
-    local next_event_ptr = global.event_ptr[global.current_event_ptr]
-    -- Does it exist?
-    if next_event_ptr ~= nil:
-        -- Locate the event
-        local next_event = global.events[next_event_ptr]
-        -- Set the current event ptr
-        global.current_event_ptr = next_event_ptr
-        -- Fire event
-        raise_event(next_event)
-    else:
-        global.current_event_ptr = nil
-end)
 
 
 
 -- For debugging
-remote.add_interface("primitives", {
-  move = move,
-})
+-- remote.add_interface("primitives", {
+--   move = move,
+-- })
 
 
 
