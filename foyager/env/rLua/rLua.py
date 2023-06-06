@@ -192,7 +192,7 @@ class rLuaCompiler:
         # Add the global ptr table to the output
         event_ptrs_str = ''
         for ptr in event_ptrs:
-            event_ptrs_str += 'global.event_ptrs[\'{ptr}\'] = {value}'.format(
+            event_ptrs_str += 'global.event_ptrs[\'{ptr}\'] = \'{value}\''.format(
                 ptr = ptr,
                 value = event_ptrs[ptr] 
             )+'\n'
@@ -201,10 +201,10 @@ class rLuaCompiler:
         # Add the global event table to the output
         events_str = ''
         for ptr in event_ptrs:
-            events_str += 'global.events[\'{ptr}\'] = generate_event_name()'.format(
+            events_str += 'global.events[\'{ptr}\'] = script.generate_event_name()'.format(
                 ptr = ptr,
             )+'\n'
-            events_str += 'global.events[\'{ptr}\'] = generate_event_name()'.format(
+            events_str += 'global.events[\'{ptr}\'] = script.generate_event_name()'.format(
                 ptr = event_ptrs[ptr],
             )+'\n'
 
@@ -220,13 +220,24 @@ class rLuaCompiler:
 
 
 
-# source_lua = ""
+source_lua = """
+function complete_task(x, y)
+    await craft(3, 'burner-mining-drill')
+    await move(0.5, -7.5)
+    await build({0.5, -7.5}, 'burner-mining-drill', 0)
+    await craft(1, 'stone-furnace')
+    await move(23.5, 28.5)
+    await build({23.5, 28.5}, 'stone-furnace', 0)
+    await build({1.5, -7.5}, 'burner-mining-drill', 0)
+    await build({-0.5, -7.5},'burner-mining-drill', 0)
+end
+"""
 # with open('tests/test_script_1.lua') as f:
 #     source_rlua = f.read()
 
-# print(source_rlua)
+print(source_lua)
 
-# compiler = rLuaCompiler(source_rlua)
-# compiler.compile_to_rlua()
-# for line in compiler.target_code:
-#     print(line)
+compiler = rLuaCompiler(source_lua)
+compiler.compile_to_lua()
+for line in compiler.target_code:
+    print(line)

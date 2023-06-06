@@ -24,6 +24,8 @@ class FoyagerEnv():
         self.server_ip=server_ip
         self.rcon_port = rcon_port
         self.rcon_password = rcon_password
+        
+        
     def observe(self,entities,client):
         client.run(f"/c remote.call('writeouts', 'writeout_inventory')")
         client.run(f"/c remote.call('writeouts', 'writeout_recipes')")
@@ -68,6 +70,7 @@ class FoyagerEnv():
     refresh_entities: list[str] = []
     ) -> json:
         
+        self.client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
         # Compile code from rLua to Lua
         compiled_lua_pair = self.compile_lua(code) 
         if compiled_lua_pair[0] == False:
@@ -76,8 +79,7 @@ class FoyagerEnv():
         
         code = compiled_lua_pair[1]
          
-        client = Client(self.server_ip, self.rcon_port, passwd=self.rcon_password)
-        with client as c:
+        with self.client as c:
             if code:
                     load_message_id = uuid.uuid4()
                     c.run(f"/c remote.call('scripts', 'load_script', '{load_message_id}', '{function_name}', '{code}'")
@@ -85,8 +87,9 @@ class FoyagerEnv():
                     execute_message_id = uuid.uuid4()
                     c.run(f"/c remote.call('scripts', 'execute_script', '{execute_message_id}', '{function_name})")
 
-            # Get response from the game
-            response = self.get_response(load_message_id, execute_message_id)
+                    # Get response from the game
+                    # response = self.get_response(load_message_id, execute_message_id)
+                    # print(response)
             
             # events is the return value of the command and the state of any entities requested refreshed after the execution        
             events = []
