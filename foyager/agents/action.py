@@ -80,7 +80,7 @@ class ActionAgent:
     def process_ai_message(self, message):
         error = None
         code_pattern = re.compile(r"Lua code:\n```(.*?)```", re.DOTALL)
-        function_pattern = re.compile(r"local function (.*?)\(\)", re.DOTALL)
+        function_pattern = re.compile(r'Function name: (.*?)', re.DOTALL)
 
         code = code_pattern.findall(message['completion'])
         function = function_pattern.findall(message['completion'])

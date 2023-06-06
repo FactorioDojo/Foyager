@@ -222,8 +222,8 @@ class CurriculumAgent:
 
     def propose_next_task(self, *, events, max_retries=5):
         if self.progress == 0 and self.mode == "auto":
-            task = "Place your burner drill and start gathering other resources."
-            context = "You just spawned into a new world. Maximize production and grow the factory"
+            task = "Place your burner drill on an iron ore patch and hand mine some coal to fill it."
+            context = "You just spawned into a new world. Start by using coal fueled automation to grow your production."
             return task, context
         
         messages = [
