@@ -180,7 +180,7 @@ class Foyager:
         
         skills = self.skill_manager.retrieve_skills(query=self.context)
         #first observation is only does resources and simple-entities
-        events = self.env.step(refresh_entities=['resource','simple-entitiy'])
+        events = self.env.step(refresh_entities=['resource','simple-entitiy','assembling-machine','furnace'])
         print(
             f"\033[33mRender Action Agent system message with {len(skills)} control_primitives\033[0m"
         )
