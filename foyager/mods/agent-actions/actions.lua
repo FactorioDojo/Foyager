@@ -99,14 +99,14 @@ function craft(count, recipe)
 
     if amt ~= count then
         clog("Warning: tried to craft " .. count .. " items, but could only craft " .. amt)
-        return true
+        -- return true
     end
 
-    clog("Info: successfully crafted " .. cout .. " item")
+    clog("Info: successfully crafted " .. count .. " item")
 
 	raise_event(global.ASYNC_EXEC_COMPLETE)
 
-	return true
+	-- return true
 end
 
 
