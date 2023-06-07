@@ -104,7 +104,7 @@ function craft(count, recipe)
 
     clog("Info: successfully crafted " .. count .. " item")
 
-	raise_event(global.ASYNC_EXEC_COMPLETE)
+	script.raise_event(global.ASYNC_EXEC_COMPLETE)
 
 	-- return true
 end
@@ -263,7 +263,7 @@ function build(position, item, direction)
 
     clog("Info: successfully built item at position")
 
-	raise_event(global.ASYNC_EXEC_COMPLETE)
+	script.raise_event(global.ASYNC_EXEC_COMPLETE)
 
 	return true
 end
@@ -300,7 +300,7 @@ function recipe(position, recipe)
 	end
 
 	clog("Info: successfully set recipe")
-	raise_event(global.ASYNC_EXEC_COMPLETE)
+	script.raise_event(global.ASYNC_EXEC_COMPLETE)
 
 	return true
 end
@@ -353,7 +353,7 @@ function put(position, item, amount, slot)
     clog("Info: successfully  inserted " .. amount .. " items")
 	p.remove_item{name=item, count=inserted}
 
-	raise_event(global.ASYNC_EXEC_COMPLETE)
+	script.raise_event(global.ASYNC_EXEC_COMPLETE)
 
 	return true
 end
@@ -412,7 +412,7 @@ function take(position, item, amount, slot)
 	otherinv.remove{name=item, count=taken}
     clog("Info: items taken successfully")
 
-	raise_event(global.ASYNC_EXEC_COMPLETE)
+	script.raise_event(global.ASYNC_EXEC_COMPLETE)
 
 	return true
 end

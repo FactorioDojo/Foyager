@@ -73,7 +73,7 @@ function init()
             -- Set the current event ptr
             global.current_event_ptr = next_event_ptr
             -- Fire event
-            raise_event(next_event)
+            script.raise_event(next_event)
         else
             global.current_event_ptr = nil
         end
@@ -119,7 +119,7 @@ on_tick_move_event = function(event)
             global.character_is_moving = false
             global.move_path_index = 1
 			unsubscribe_on_tick_event(on_tick_move_event)
-            raise_event(global.ASYNC_EXEC_COMPLETE)
+            script.raise_event(global.ASYNC_EXEC_COMPLETE)
         else
             -- move the character for one tick
             game.get_player(1).walking_state = {
@@ -164,7 +164,7 @@ script.on_event(defines.events.on_player_crafted_item, function(event)
             global.craft_recipe = nil
             global.amount_crafted = 0
             global.amount_to_craft = 0
-            raise_event(global.ASYNC_EXEC_COMPLETE)
+            script.raise_event(global.ASYNC_EXEC_COMPLETE)
         else
             global.amount_crafted = global.amount_crafted + 1
         end
@@ -192,7 +192,7 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
             global.resources_left_to_mine = 0
             global.resources_mined = 0
             -- Raise ASYNC complete
-            raise_event(global.ASYNC_EXEC_COMPLETE)
+            script.raise_event(global.ASYNC_EXEC_COMPLETE)
         else
             global.resources_mined = global.resources_mined + 1
         end
@@ -206,7 +206,7 @@ script.on_event(defines.events.on_player_mined_entity, function(event)
         global.mining_position = nil
         global.is_mining_entity = false
         -- Raise ASYNC complete
-        raise_event(global.ASYNC_EXEC_COMPLETE)
+        script.raise_event(global.ASYNC_EXEC_COMPLETE)
     end
 
 end)
